@@ -49,14 +49,6 @@ public class StallServiceImpl implements StallService {
         {
              stall.setCurrentStatus(0);
         }
-        //捕获异常，可能创建失败
-        try
-        {
-            stallMapper.add(stall);
-        }
-        catch (DuplicateKeyException e)
-        {
-            throw  new RuntimeException("摊位名字不能重复");
-        }
+        stallMapper.add(stall);
     }
 }

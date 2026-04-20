@@ -1,6 +1,7 @@
 package org.example.stall_manage.exception;
 
 import org.example.stall_manage.pojo.Result;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -35,5 +36,15 @@ public class GlobalException {
     {
         ex.printStackTrace();
         return Result.error("服务器出错，稍后再试");
+    }
+
+    @ExceptionHandler(DuplicateKeyException.class)
+    public Result<?> hdlDupliKeyEx(DuplicateKeyException ex)
+    {
+        String msg=ex.getMessage();
+        int it=msg.indexOf("Duplicate entry");
+        msg=msg.substring(it);
+        String[] err=msg.split(" ");
+        return Result.error(err[2]+"已存在");
     }
 }

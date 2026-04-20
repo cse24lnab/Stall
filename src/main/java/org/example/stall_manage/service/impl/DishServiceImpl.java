@@ -51,13 +51,6 @@ public class DishServiceImpl implements DishService {
         {
             dish.setIsSoldOut(1);
         }
-        try
-        {
-            dishMapper.add(dish);
-        }
-        catch (DuplicateKeyException e)
-        {
-           throw new RuntimeException("该菜品已存在");
-        }
+        dishMapper.add(dish);
     }
 }
