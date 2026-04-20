@@ -1,0 +1,28 @@
+package org.example.stall_manage.pojo;
+
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Dish {
+    private Integer id;
+    @NotNull(message ="摊位id不能为空")
+    private Integer stallId;
+    @NotBlank(message = "菜品名字不能为空")
+    private String name;
+    @NotNull(message = "价格不能为空")
+    @Min(value = 0,message = "价格不能小于0")
+    private BigDecimal price;
+    private Integer isSoldOut;//状态: 0=有货, 1=售罄
+    private LocalDateTime createTime;
+    private LocalDateTime updateTime;
+}

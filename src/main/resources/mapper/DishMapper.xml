@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.stall_manage.mapper.DishMapper">
+    <select id="findAll" resultType="org.example.stall_manage.pojo.Dish">
+        SELECT * FROM dish WHERE stall_id=#{stallId};
+    </select>
+    <select id="find" resultType="org.example.stall_manage.pojo.Dish">
+        SELECT * FROM dish WHERE stall_id=#{stallId} AND name=#{name};
+    </select>
+    <insert id="add" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `dish`(`stall_id`,`name`,`price`,`is_sold_out`)
+        VALUES (#{stallId},#{name},#{price},#{isSoldOut});
+    </insert>
+</mapper>
