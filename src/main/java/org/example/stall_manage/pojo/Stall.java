@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
@@ -13,9 +12,10 @@ import java.time.LocalTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Stall {
+
     private Integer id;
 
-    //@NotBlank(message = "摊位名字不能为空")
+   @NotBlank(message = "摊位名字不能为空")
     private String name;
 
     //状态: 0=休息, 1=营业 默认0

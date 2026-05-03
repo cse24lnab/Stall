@@ -23,9 +23,6 @@ public class DishServiceImpl implements DishService {
 
     @Override
     public List<Dish> find(Dish dish) {
-        if(dish.getStallId()==null){
-            return Collections.emptyList();
-        }
         List<Dish> dishes = dishMapper.find(dish);
         //防御性编程，根据api规范不应该给前端返回null列表
         if(dishes==null){
@@ -46,12 +43,19 @@ public class DishServiceImpl implements DishService {
             //由于全局异常处理器的捕获级别，这里必须自定义异常并抛出
             throw new StallNotExistException("摊位不存在");
         }
-        //isSoldOut的默认值给sql管理
+        if(dish.getIsSoldOut()==null)
+        {
+            dish.setIsSoldOut(0);
+        }
         dishMapper.add(dish);
     }
 
     @Override
     public void deleteById(List<Integer> ids) {
+        if(ids == null || ids.isEmpty())
+        {
+            return;
+        }
         dishMapper.deleteById(ids);
     }
 }

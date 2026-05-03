@@ -17,7 +17,7 @@ public class DishController {
     private DishService dishService;
 
     @GetMapping("/dishes")
-    public Result<List<Dish>> find(@Valid Dish dish)
+    public Result<List<Dish>> find(Dish dish)
     {
         log.info("查询菜品，条件为{}",dish);
         List<Dish>result = dishService.find(dish);

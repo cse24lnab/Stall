@@ -1,5 +1,6 @@
 package org.example.stall_manage.service.impl;
 
+import org.example.stall_manage.exception.StallNotExistException;
 import org.example.stall_manage.mapper.DishMapper;
 import org.example.stall_manage.mapper.StallMapper;
 import org.example.stall_manage.pojo.Stall;
@@ -11,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 public class StallServiceImpl implements StallService {
@@ -29,9 +31,28 @@ public class StallServiceImpl implements StallService {
     }
 
     @Override
+    public Stall getById(Integer id) {
+        if(id == null)
+        {
+            throw new IllegalArgumentException("参数不能为null");
+        }
+        Stall stall=new Stall();
+        stall.setId(id);
+        List<Stall> stalls=stallMapper.find(stall);
+        if(stalls==null || stalls.isEmpty())
+        {
+            throw new StallNotExistException("摊位不存在");
+        }
+        return stalls.get(0);
+    }
+
+    @Override
     public void add(Stall stall)
     {
-        //currentStatus的默认值给sql管理
+        if(stall.getCurrentStatus() == null)
+        {
+            stall.setCurrentStatus(0);
+        }
         stallMapper.add(stall);
     }
 
@@ -39,6 +60,10 @@ public class StallServiceImpl implements StallService {
     @Transactional(rollbackFor = Exception.class)
     public void delete(List<Integer> ids)
     {
+        if(ids == null || ids.isEmpty())
+        {
+            return;
+        }
         stallMapper.delete(ids);
         dishMapper.deleteByStallId(ids);
     }
