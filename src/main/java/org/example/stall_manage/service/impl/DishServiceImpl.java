@@ -46,11 +46,12 @@ public class DishServiceImpl implements DishService {
             //由于全局异常处理器的捕获级别，这里必须自定义异常并抛出
             throw new StallNotExistException("摊位不存在");
         }
-        //默认售罄
-        if(dish.getIsSoldOut()==null)
-        {
-            dish.setIsSoldOut(1);
-        }
+        //isSoldOut的默认值给sql管理
         dishMapper.add(dish);
+    }
+
+    @Override
+    public void deleteById(List<Integer> ids) {
+        dishMapper.deleteById(ids);
     }
 }

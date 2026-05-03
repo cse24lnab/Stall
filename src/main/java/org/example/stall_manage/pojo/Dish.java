@@ -27,7 +27,7 @@ public class Dish {
     @Min(value = 0,message = "价格不能小于0")
     private BigDecimal price;
 
-    //状态: 0=有货, 1=售罄
+    //状态: 0=有货, 1=售罄 默认0
     private Integer isSoldOut;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;

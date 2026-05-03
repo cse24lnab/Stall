@@ -6,10 +6,7 @@ import org.example.stall_manage.pojo.Dish;
 import org.example.stall_manage.pojo.Result;
 import org.example.stall_manage.service.DishService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -34,5 +31,13 @@ public class DishController {
             //检查摊位是否存在
             dishService.add(dish);
             return Result.success();
+    }
+
+    @DeleteMapping("/dishes")
+    public Result<Dish> delete(@RequestParam List<Integer> ids)
+    {
+        log.info("删除id为{}的菜品",ids);
+        dishService.deleteById(ids);
+        return Result.success();
     }
 }

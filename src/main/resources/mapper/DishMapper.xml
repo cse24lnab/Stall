@@ -22,4 +22,16 @@
         INSERT INTO `dish`(`stall_id`,`name`,`price`,`is_sold_out`)
         VALUES (#{stallId},#{name},#{price},#{isSoldOut});
     </insert>
+    <update id="deleteById">
+        UPDATE `dish` SET is_delete=1 WHERE id IN
+            <foreach collection="ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+    </update>
+    <update id="deleteByStallId">
+        UPDATE `dish` SET is_delete=1 WHERE stall_id IN
+        <foreach collection="stallIds" item="sid" open="(" separator="," close=")">
+            #{sid}
+        </foreach>
+    </update>
 </mapper>

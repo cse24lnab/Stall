@@ -10,4 +10,8 @@ public interface DishMapper {
     List<Dish> find(Dish dish);
 
     void add(Dish dish);
+
+    void deleteById(List<Integer> ids);
+
+    void deleteByStallId(List<Integer> stallIds);
 }

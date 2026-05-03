@@ -18,7 +18,7 @@ public class Stall {
     //@NotBlank(message = "摊位名字不能为空")
     private String name;
 
-    //状态: 0=休息, 1=营业
+    //状态: 0=休息, 1=营业 默认0
     private Integer currentStatus;
     private String noonLocation;
     private String eveningLocation;

@@ -23,17 +23,23 @@ public class StallController {
     public Result<List<Stall>> find( Stall stall)
     {
         log.info("查询小摊，条件为{}",stall);
-        //处理名字为空的情况给前端
         List<Stall> result=stallService.find(stall);
-        //把包装好的stall取出来，方便传递给前端
         return Result.success(result);
     }
 
     @PostMapping("/stalls")
     public Result<Stall> add(@RequestBody @Valid Stall stall)
     {
-            log.info("增加小摊，名字叫{}",stall.getName());
-            stallService.add(stall);
-            return Result.success();
+        log.info("增加小摊，名字叫{}",stall.getName());
+        stallService.add(stall);
+        return Result.success();
+    }
+
+    @DeleteMapping("/stalls")
+    public Result<Stall> delete(@RequestParam List<Integer> ids)
+    {
+        log.info("删除小摊，名字列表是{}",ids);
+        stallService.delete(ids);
+        return Result.success();
     }
 }
