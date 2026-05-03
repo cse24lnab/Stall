@@ -28,4 +28,10 @@ public class Stall {
     private LocalTime eveningEndTime;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
+
+    //逻辑删除
+    private Integer isDelete;
+
+    //用户身份
+    private Integer ownerUserId;
 }

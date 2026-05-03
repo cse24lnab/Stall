@@ -6,6 +6,7 @@
         <select id="find" resultType="org.example.stall_manage.pojo.Stall">
             SELECT * FROM stall
                 <where>
+                    AND `is_delete`=0
                     <if test="id !=null">
                         AND `id`=#{id}
                     </if>
@@ -18,4 +19,10 @@
             INSERT INTO `stall` (`name`,`current_status`,`noon_location`,`evening_location`,`noon_start_time`,`noon_end_time`,`evening_start_time`,`evening_end_time`)
             VALUES (#{name},#{currentStatus},#{noonLocation},#{eveningLocation},#{noonStartTime},#{noonEndTime},#{eveningStartTime},#{eveningEndTime});
         </insert>
+        <update id="delete">
+            UPDATE `stall` SET is_delete=1 WHERE id IN 
+                <foreach collection="ids" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+        </update>
     </mapper>

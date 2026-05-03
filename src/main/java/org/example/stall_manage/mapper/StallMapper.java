@@ -10,4 +10,6 @@ public interface StallMapper {
     List<Stall> find(Stall stall);
 
     void add(Stall stall);
+
+    void delete(List<Integer> ids);
 }

@@ -31,4 +31,7 @@ public class Dish {
     private Integer isSoldOut;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
+
+    //逻辑删除
+    private Integer isDelete;
 }

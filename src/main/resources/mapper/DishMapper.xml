@@ -6,6 +6,7 @@
     <select id="find" resultType="org.example.stall_manage.pojo.Dish">
         SELECT * FROM dish
         <where>
+            AND `is_delete`=0
             <if test="stallId != null">
                 AND `stall_id`=#{stallId}
             </if>
