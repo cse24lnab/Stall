@@ -6,9 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface StallService {
-    List<Stall> findAll();
-
-    Optional<Stall> find(String name);
+    List<Stall> find(Stall stall);
 
     void add(Stall stall);
 }

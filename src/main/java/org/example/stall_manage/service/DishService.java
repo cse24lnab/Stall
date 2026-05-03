@@ -8,9 +8,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface DishService {
-    List<Dish> findAll(Integer stallId);
+    List<Dish> find(Dish dish);
 
-    Optional<Dish> find(Integer stallId, String name);
 
-    void add(Dish dish);
+    void add (Dish dish);
 }

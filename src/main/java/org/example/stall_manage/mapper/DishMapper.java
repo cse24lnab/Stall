@@ -6,9 +6,8 @@ import org.example.stall_manage.pojo.Stall;
 import java.util.List;
 
 public interface DishMapper {
-    List<Dish> findAll(Integer stallId);
-
-    Dish find(Integer stallId,String name);
+    //todo 分页查询和根据价格降序
+    List<Dish> find(Dish dish);
 
     void add(Dish dish);
 }

@@ -14,9 +14,12 @@ import java.time.LocalTime;
 @AllArgsConstructor
 public class Stall {
     private Integer id;
-    @NotBlank(message = "摊位名字不能为空")
+
+    //@NotBlank(message = "摊位名字不能为空")
     private String name;
-    private Integer currentStatus;//状态: 0=休息, 1=营业
+
+    //状态: 0=休息, 1=营业
+    private Integer currentStatus;
     private String noonLocation;
     private String eveningLocation;
     private LocalTime noonStartTime;

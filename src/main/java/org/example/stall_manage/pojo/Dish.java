@@ -15,14 +15,20 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class Dish {
     private Integer id;
+
     @NotNull(message ="摊位id不能为空")
     private Integer stallId;
+
     @NotBlank(message = "菜品名字不能为空")
+    //notblank就是不为null也不为空串
     private String name;
+
     @NotNull(message = "价格不能为空")
     @Min(value = 0,message = "价格不能小于0")
     private BigDecimal price;
-    private Integer isSoldOut;//状态: 0=有货, 1=售罄
+
+    //状态: 0=有货, 1=售罄
+    private Integer isSoldOut;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 }

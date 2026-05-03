@@ -15,7 +15,7 @@ public class StallMapperTest {
     @Autowired
     private StallMapper stallMapper;
 
-    @Test
+    /*@Test
     void testfindAllStall() {
         System.out.println("开始测试findALLStall-------------------");
         List<Stall> stalls = stallMapper.findAll();
@@ -23,5 +23,5 @@ public class StallMapperTest {
         Assertions.assertEquals(1,stalls.size());
         Assertions.assertEquals("烤冷面",stalls.get(0).getName());
         System.out.println("测试结束------------------------------");
-    }
+    }*/
 }

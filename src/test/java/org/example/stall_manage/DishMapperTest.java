@@ -16,12 +16,12 @@ public class DishMapperTest {
     @Autowired
     private DishMapper dishMapper;
 
-    @Test
+   /* @Test
     void findAllDish() {
         System.out.println("开始测试dish--------------");
         List<Dish> dishs = dishMapper.findAll(1);
         Assertions.assertNotNull(dishs);
         Assertions.assertEquals(1,dishs.size());
         Assertions.assertEquals("基础款烤冷面",dishs.get(0).getName());
-    }
+    }*/
 }

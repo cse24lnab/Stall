@@ -6,10 +6,8 @@ import org.example.stall_manage.pojo.Stall;
 import java.util.List;
 
 public interface StallMapper {
-
-    List<Stall> findAll();
-
-    Stall find(String name);
+    //todo 其他字段没有写动态sql
+    List<Stall> find(Stall stall);
 
     void add(Stall stall);
 }

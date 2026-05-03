@@ -1,6 +1,7 @@
 package org.example.stall_manage.controller;
 
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.example.stall_manage.pojo.Dish;
 import org.example.stall_manage.pojo.Result;
 import org.example.stall_manage.service.DishService;
@@ -10,42 +11,27 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 
+@Slf4j
 @RestController
 public class DishController {
     @Autowired
     private DishService dishService;
 
     @GetMapping("/dishes")
-    public Result<List<Dish>> findAll(Integer stallId)
+    public Result<List<Dish>> find(@Valid Dish dish)
     {
-        if(stallId==null)
-        {
-            return Result.error("id不能为空");
-        }
-        List<Dish>result = dishService.findAll(stallId);
+        log.info("查询菜品，条件为{}",dish);
+        List<Dish>result = dishService.find(dish);
         return Result.success(result);
-    }
-
-    @GetMapping("/dish")
-    public Result<Dish> find(Integer stallId,String name)
-    {
-        if(stallId==null || name==null)
-        {
-            return Result.error("id或者名字不能为空");
-        }
-        Optional<Dish> Odish=dishService.find(stallId,name);
-        //把包装取出来以正确传给前端
-        Dish dish=Odish.orElse(null);
-        return Result.success(dish);
     }
 
     @PostMapping("/dishes")
     public Result<Dish> add(@RequestBody @Valid Dish dish)
     {
+            log.info("增加名字为{}的菜品",dish.getName());
+            //检查摊位是否存在
             dishService.add(dish);
             return Result.success();
     }

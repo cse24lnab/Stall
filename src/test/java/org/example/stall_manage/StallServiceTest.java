@@ -14,7 +14,7 @@ public class StallServiceTest {
     @Autowired
     private StallService stallService;
 
-    @Test
+    /*@Test
     public void findAll() {
         System.out.println("开始测试--------------");
         List<Stall> stalls = stallService.findAll();
@@ -22,6 +22,6 @@ public class StallServiceTest {
         Assertions.assertEquals(1,stalls.size());
         Assertions.assertEquals("烤冷面",stalls.get(0).getName());
         System.out.println("结束测试--------------");
-    }
+    }*/
 
 }

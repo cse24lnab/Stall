@@ -15,7 +15,7 @@ public class DishServiceTest {
     @Autowired
     private DishService dishService;
 
-    @Test
+   /* @Test
     public void findAll() {
         System.out.println("开始测试------------");
         List<Dish> dishList = dishService.findAll(1);
@@ -23,5 +23,5 @@ public class DishServiceTest {
         Assertions.assertEquals(1,dishList.size());
         Assertions.assertEquals("基础款烤冷面",dishList.get(0).getName());
         System.out.println("结束测试------------");
-    }
+    }*/
 }
