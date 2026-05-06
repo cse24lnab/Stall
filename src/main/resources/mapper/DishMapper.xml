@@ -2,8 +2,8 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="org.example.stall_manage.mapper.DishMapper">
-    <select id="find" resultType="org.example.stall_manage.pojo.Dish">
+<mapper namespace="org.lab.stall_manage.mapper.DishMapper">
+    <select id="find" resultType="org.lab.stall_manage.pojo.Dish">
         SELECT * FROM dish
         <where>
             AND `is_delete`=0
@@ -15,6 +15,9 @@
             </if>
             <if test="price !=null">
                 AND `price`=#{price}
+            </if>
+            <if test="id != null">
+                AND  `id`=#{id}
             </if>
         </where>
     </select>
@@ -33,5 +36,20 @@
         <foreach collection="stallIds" item="sid" open="(" separator="," close=")">
             #{sid}
         </foreach>
+    </update>
+    <update id="update">
+        UPDATE `dish`
+            <set>
+                <if test="name != null and name !=''">
+                    name=#{name},
+                </if>
+                <if test="price != null">
+                    price=#{price},
+                </if>
+                <if test="isSoldOut != null">
+                    is_sold_out=#{isSoldOut},
+                </if>
+            </set>
+            WHERE `id`=#{id} AND `is_delete`=0
     </update>
 </mapper>

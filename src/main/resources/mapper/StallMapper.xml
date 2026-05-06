@@ -2,8 +2,8 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-    <mapper namespace="org.example.stall_manage.mapper.StallMapper">
-        <select id="find" resultType="org.example.stall_manage.pojo.Stall">
+    <mapper namespace="org.lab.stall_manage.mapper.StallMapper">
+        <select id="find" resultType="org.lab.stall_manage.pojo.Stall">
             SELECT * FROM stall
                 <where>
                     AND `is_delete`=0
@@ -25,4 +25,34 @@
                     #{id}
                 </foreach>
         </update>
-    </mapper>
+        <update id="update">
+            UPDATE `stall`
+            <set>
+                <if test="name !=null and name != ''">
+                    `name`=#{name},
+                </if>
+                <if test="currentStatus != null">
+                    `current_status`=#{currentStatus},
+                </if>
+                <if test="noonLocation != null and noonLocation != ''">
+                    `noon_location`=#{noonLocation},
+                </if>
+                <if test="eveningLocation != null and eveningLocation !=''">
+                    `evening_location`=#{eveningLocation},
+                </if>
+                <if test="noonStartTime != null">
+                    `noon_start_time`=#{noonStartTime},
+                </if>
+                <if test="noonEndTime != null">
+                    `noon_end_time`=#{noonEndTime},
+                </if>
+                <if test="eveningStartTime != null">
+                    `evening_start_time`=#{eveningStartTime},
+                </if>
+                <if test="eveningEndTime != null">
+                    `evening_end_time`=#{eveningEndTime},
+                </if>
+            </set>
+            WHERE `id`=#{id} AND `is_delete`=0
+        </update>
+</mapper>

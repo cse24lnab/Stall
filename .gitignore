@@ -44,5 +44,5 @@ Thumbs.db
 
 nginx.zip
 
-src/main/resources/application.properties
+src/main/resources/application.yml
 
