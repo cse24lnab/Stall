@@ -34,4 +34,5 @@ public class Stall {
 
     //用户身份
     private Integer ownerUserId;
+    //todo 图片url
 }

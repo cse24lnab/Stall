@@ -45,4 +45,4 @@ Thumbs.db
 nginx.zip
 
 src/main/resources/application.yml
-
+docs/context.md
