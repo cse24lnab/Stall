@@ -18,7 +18,7 @@ public class MeResponse {
     private Integer avatarFileId;
     private String avatarUrl;
     private UserRole role;
-    private Boolean status;
+    private String status;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 }

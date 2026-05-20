@@ -3,8 +3,10 @@ package org.lab.stall_manage.controller;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.extern.slf4j.Slf4j;
+import org.lab.stall_manage.annotation.RequireRole;
 import org.lab.stall_manage.pojo.Dish;
 import org.lab.stall_manage.pojo.Result;
+import org.lab.stall_manage.pojo.enums.UserRole;
 import org.lab.stall_manage.service.DishService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -15,6 +17,7 @@ import java.util.Objects;
 
 @Slf4j
 @RestController
+//json参数，单一参数都可用，支持分组
 @Validated
 public class DishController {
     @Autowired
@@ -36,7 +39,9 @@ public class DishController {
         return Result.success(dish);
     }
 
+    @RequireRole({UserRole.ADMIN,UserRole.MERCHANT})
     @PostMapping("/dishes")
+    //@Valid只可以用于json参数
     public Result<Dish> add(@RequestBody @Valid Dish dish)
     {
         log.info("增加名字为{}的菜品",dish.getName());
@@ -45,6 +50,7 @@ public class DishController {
         return Result.success();
     }
 
+    @RequireRole({UserRole.ADMIN,UserRole.MERCHANT})
     @DeleteMapping("/dishes")
     public Result<Dish> delete(@RequestParam List<Integer> ids)
     {
@@ -53,6 +59,7 @@ public class DishController {
         return Result.success();
     }
 
+    @RequireRole({UserRole.ADMIN,UserRole.MERCHANT})
     @PutMapping("/dishes/{id}")
     public Result<Dish> update(@PathVariable @Positive(message = "id必须大于0") Integer id,@RequestBody Dish dish)
     {

@@ -23,67 +23,98 @@ public class LoginInterceptor implements HandlerInterceptor {
     @Autowired
     private JwtProperties jwtProperties;
 
-    private final String AUTHORISATION="Authorisation";
-    private  final String BEARER="Bearer";
+    private static final String AUTHORIZATION = "Authorization";
+    private static final String BEARER_PREFIX = "Bearer ";
     
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception
     {
-        if(!(handler instanceof HandlerMethod)) {
+        if (!(handler instanceof HandlerMethod handlerMethod)) {
             return true;
         }
-        String auth = request.getHeader(AUTHORISATION);
-        if(auth == null || auth.isEmpty())
-        {
-            log.info("令牌为空");
-            response.setStatus(401);
-            return  false;
-        }
-        String token=auth.substring(BEARER.length()).trim();
-        if(token.isEmpty())
-        {
-            log.info("令牌为空");
-            response.setStatus(401);
-            return  false;
-        }
         try {
+            String token = this.getToken(request);
             Map<String,Object> claims = JwtToken.parseToken(jwtProperties.getSecretKey(), token);
-            CurrentUser currentUser=new CurrentUser();
-            //强转成Integer的父类再取值，防止类型转换错误
-            currentUser.setId(((Number) claims.get("id")).intValue());
-            currentUser.setUsername((String) claims.get("username"));
-            currentUser.setRole( UserRole.valueOf((String) claims.get("role")) );
+            CurrentUser currentUser = this.createCurrentUser(claims);
             BaseContext.setCurrentUser(currentUser);
-            RequireRole requireRole=((HandlerMethod) handler).getMethodAnnotation(RequireRole.class);
-            this.checkRole(requireRole,currentUser);
+            RequireRole requireRole = this.getRequireRole(handlerMethod);
+            this.checkRole(requireRole, currentUser);
+            log.info("令牌校验通过");
+            return true;
+        }
+        catch (IllegalAccessException ex)
+        {
+            BaseContext.RemoveCurrentUser();
+            //todo 异常
+            log.info("权限不足", ex);
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            return false;
         }
         catch (Exception ex)
         {
-            //afterCompletion是返回true才会执行
             BaseContext.RemoveCurrentUser();
-            log.info("令牌校验失败");
-            response.setStatus(401);
-            return  false;
+            //todo 异常
+            log.info("令牌校验失败", ex);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return false;
         }
-        log.info("令牌校验通过");
-        return true;
     }
 
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler,
-                                 Exception ex) throws Exception {
+                                  Exception ex) throws Exception {
         BaseContext.RemoveCurrentUser();
     }
 
-    private void checkRole(RequireRole requireRole,CurrentUser currentUser) throws Exception
+    private void checkRole(RequireRole requireRole, CurrentUser currentUser) throws IllegalAccessException
     {
-        if(requireRole == null)
+        if (requireRole == null)
         {
             return;
         }
-        if(!Arrays.asList(requireRole.value()).contains(currentUser.getRole()))
+        if (!Arrays.asList(requireRole.value()).contains(currentUser.getRole()))
         {
-            throw new Exception("error");
+            throw new IllegalAccessException("无访问权限");
         }
+    }
+
+    private String getToken(HttpServletRequest request)
+    {
+        String auth = request.getHeader(AUTHORIZATION);
+        if (auth == null || auth.isBlank())
+        {
+            throw new IllegalArgumentException("令牌为空");
+        }
+        if (!auth.startsWith(BEARER_PREFIX))
+        {
+            throw new IllegalArgumentException("令牌格式错误");
+        }
+
+        String token = auth.substring(BEARER_PREFIX.length()).trim();
+        if (token.isBlank())
+        {
+            throw new IllegalArgumentException("令牌为空");
+        }
+
+        return token;
+    }
+
+    private CurrentUser createCurrentUser(Map<String,Object> claims)
+    {
+        CurrentUser currentUser = new CurrentUser();
+        currentUser.setId(((Number) claims.get("id")).intValue());
+        currentUser.setUsername((String) claims.get("username"));
+        currentUser.setRole(UserRole.valueOf((String) claims.get("role")));
+        return currentUser;
+    }
+
+    private RequireRole getRequireRole(HandlerMethod handlerMethod)
+    {
+        RequireRole methodRole = handlerMethod.getMethodAnnotation(RequireRole.class);
+        if (methodRole != null)
+        {
+            return methodRole;
+        }
+        return handlerMethod.getBeanType().getAnnotation(RequireRole.class);
     }
 }

@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.lab.stall_manage.pojo.enums.Status;
 import org.lab.stall_manage.pojo.enums.UserRole;
 
 import java.time.LocalDateTime;
@@ -23,7 +24,7 @@ public class User {
     private Integer avatarFileId;
     private String avatarUrl;
     private UserRole role;
-    private Integer status;
+    private Status status;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
     private Integer isDelete;

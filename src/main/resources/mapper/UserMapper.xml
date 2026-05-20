@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.lab.stall_manage.mapper.UserMapper">
+
+    <insert id="add" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `user`(`username`,`password_hash`,`nickname`,`phone`,`avatar_file_id`,`avatar_url`,`create_time`,`update_time`) VALUES (#{username},#{passwordHash},#{nickname},#{phone},#{avatarFileId},#{avatarUrl},#{createTime},#{updateTime});
+    </insert>
+    <select id="findByUsername" resultType="org.lab.stall_manage.pojo.User">
+        SELECT * FROM user WHERE username=#{username}
+    </select>
+</mapper>

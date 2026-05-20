@@ -3,8 +3,10 @@ package org.lab.stall_manage.controller;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.extern.slf4j.Slf4j;
+import org.lab.stall_manage.annotation.RequireRole;
 import org.lab.stall_manage.pojo.Result;
 import org.lab.stall_manage.pojo.Stall;
+import org.lab.stall_manage.pojo.enums.UserRole;
 import org.lab.stall_manage.service.StallService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -20,7 +22,6 @@ public class StallController {
 
     @Autowired
     private StallService stallService;
-
 
     @GetMapping("/stalls")
     public Result<List<Stall>> find(Stall stall)
@@ -38,6 +39,7 @@ public class StallController {
         return Result.success(stall);
     }
 
+    @RequireRole({UserRole.ADMIN})
     @PostMapping("/stalls")
     public Result<Stall> add(@RequestBody @Valid Stall stall)
     {
@@ -46,6 +48,7 @@ public class StallController {
         return Result.success();
     }
 
+    @RequireRole({UserRole.ADMIN})
     @DeleteMapping("/stalls")
     public Result<Stall> delete(@RequestParam List<Integer> ids)
     {
@@ -54,6 +57,7 @@ public class StallController {
         return Result.success();
     }
 
+    @RequireRole({UserRole.ADMIN})
     @PutMapping("/stalls/{id}")
     public  Result<Stall> update(@PathVariable @Positive(message = "id必须大于0") Integer id,@RequestBody Stall stall)
     {

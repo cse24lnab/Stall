@@ -1,6 +1,7 @@
 package org.lab.stall_manage.exception;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.auth.UsernamePasswordCredentials;
 import org.lab.stall_manage.pojo.Result;
 import org.springframework.context.MessageSourceResolvable;
 import org.springframework.dao.DuplicateKeyException;
@@ -24,6 +25,9 @@ public class GlobalException {
     private static final Pattern DUPLICATE_ENTRY_PATTERN =
             Pattern.compile("Duplicate entry '(.+?)' for key");
 
+    /**
+     * json格式参数校验失败
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public Result<?> hdleMethArgNotValidEx(MethodArgumentNotValidException ex)
     {
@@ -34,7 +38,7 @@ public class GlobalException {
     }
 
     /**
-     * @Valitated注解处理非类参数，抛出该异常，输入不满足要求
+     * 路径或查询参数校验失败
      */
     @ExceptionHandler(HandlerMethodValidationException.class)
     public Result<?> hdlHandlerMethodValidationEx(HandlerMethodValidationException ex)
@@ -54,7 +58,7 @@ public class GlobalException {
     }
 
     /**
-     * @Valid注解处理 类参数,类中属性不满足输入要求抛出该异常
+     *类型转换失败,for debug
      */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public Result<?> hdlMethodArgTypeMismatchEx(MethodArgumentTypeMismatchException ex)
@@ -77,6 +81,10 @@ public class GlobalException {
         return Result.error(msg);
     }
 
+
+    /**
+     *json格式的请求体参数不匹配
+     */
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public Result<?> hdlHttpMessageNotReadableEx(HttpMessageNotReadableException ex)
     {
@@ -84,6 +92,9 @@ public class GlobalException {
         return Result.error("请求体格式错误");
     }
 
+    /**
+     * unique_key数据已存在
+     */
     @ExceptionHandler(DuplicateKeyException.class)
     public Result<?> hdlDupliKeyEx(DuplicateKeyException ex)
     {
@@ -101,13 +112,34 @@ public class GlobalException {
     }
 
     /**
-     * 自定义异常类
+     * 自定义异常类,摊位不存在
      * @see StallNotExistException
      */
     @ExceptionHandler(StallNotExistException.class)
     public Result<?> hdlStallNExistEx(StallNotExistException ex)
     {
         log.error("Stall not found", ex);
+        return Result.error(ex.getMessage());
+    }
+
+    /**
+     * 自定义异常类，菜品不存在
+     * @see DishNotExistException
+     */
+    @ExceptionHandler(DishNotExistException.class)
+    public Result<?> hdlDishNExistEx(DishNotExistException ex)
+    {
+        log.error("dish not found");
+        return Result.error(ex.getMessage());
+    }
+
+    /**
+     * 自定义异常类，用户不存在
+     */
+    @ExceptionHandler(UserNotExistException.class)
+    public Result<?> hdleUserNExistEx(UserNotExistException ex)
+    {
+        log.error("user not found");
         return Result.error(ex.getMessage());
     }
 
@@ -138,4 +170,6 @@ public class GlobalException {
         log.error("Unhandled exception", ex);
         return Result.error("服务器出错，稍后再试");
     }
+
+    //todo 捕获四个异常
 }

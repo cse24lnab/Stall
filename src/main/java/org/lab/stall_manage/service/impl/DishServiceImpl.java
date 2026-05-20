@@ -1,6 +1,6 @@
 package org.lab.stall_manage.service.impl;
 
-import org.lab.stall_manage.exception.DishNotExitException;
+import org.lab.stall_manage.exception.DishNotExistException;
 import org.lab.stall_manage.exception.StallNotExistException;
 import org.lab.stall_manage.mapper.DishMapper;
 import org.lab.stall_manage.mapper.StallMapper;
@@ -102,7 +102,7 @@ public class DishServiceImpl implements DishService {
         //同add,dish首先要存在
         if(findDish == null)
         {
-            throw  new DishNotExitException("菜品不存在");
+            throw  new DishNotExistException("菜品不存在");
         }
     }
 }

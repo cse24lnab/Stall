@@ -12,5 +12,5 @@ public class LoginResponse{
        private String accessToken;
        private String tokenType;
        private Integer expiresIn;
-       private MeResponse user;
+       private AuthResponse user;
 }

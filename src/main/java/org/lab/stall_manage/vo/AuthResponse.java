@@ -1,16 +1,16 @@
-package org.lab.stall_manage.context;
+package org.lab.stall_manage.vo;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.lab.stall_manage.pojo.enums.UserRole;
 
-//解耦 上下文所需属性 jwt的payload
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class CurrentUser {
+public class AuthResponse {
     private Integer id;
     private String username;
-    private UserRole role;
+    private String nickname;
+    private String phone;
+    private String status;
 }
