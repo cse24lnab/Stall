@@ -23,8 +23,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -86,6 +88,45 @@ class StallControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.msg").value("操作失败"));
+    }
+
+    @Test
+    void deleteStallsReturnsSuccess() throws Exception {
+        mockMvc.perform(delete("/stalls").param("ids", "1").param("ids", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(1))
+                .andExpect(jsonPath("$.msg").value("success"));
+
+        verify(stallService).delete(List.of(1, 2));
+    }
+
+    @Test
+    void putStallsReturnsSuccess() throws Exception {
+        Stall stall = new Stall();
+        stall.setName("改名后摊位");
+
+        mockMvc.perform(put("/stalls/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(stall)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(1))
+                .andExpect(jsonPath("$.msg").value("success"));
+
+        verify(stallService).update(any(Stall.class));
+    }
+
+    @Test
+    void putStallsRejectsMismatchedId() throws Exception {
+        Stall stall = new Stall();
+        stall.setId(2);
+        stall.setName("改名后摊位");
+
+        mockMvc.perform(put("/stalls/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(stall)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.msg").value("id不一致"));
     }
 
     private Stall createStall() {

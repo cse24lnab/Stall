@@ -1,5 +1,6 @@
 package org.lab.stall_manage.service;
 
+import org.apache.tomcat.websocket.AuthenticationException;
 import org.lab.stall_manage.dto.LoginRequest;
 import org.lab.stall_manage.dto.RegisterRequest;
 import org.lab.stall_manage.vo.AuthResponse;

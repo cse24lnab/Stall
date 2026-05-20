@@ -1,5 +1,6 @@
 package org.lab.stall_manage;
 
+import org.lab.stall_manage.exception.DishNotExistException;
 import org.lab.stall_manage.exception.StallNotExistException;
 import org.lab.stall_manage.mapper.DishMapper;
 import org.lab.stall_manage.mapper.StallMapper;
@@ -19,6 +20,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -89,6 +91,76 @@ public class DishServiceTest {
 
         assertEquals(0, dish.getIsSoldOut());
         verify(dishMapper).add(dish);
+    }
+
+    @Test
+    void deleteByIdDoesNothingWhenIdsIsNull() {
+        dishService.deleteById(null);
+
+        verify(dishMapper, never()).deleteById(anyList());
+    }
+
+    @Test
+    void deleteByIdDoesNothingWhenIdsIsEmpty() {
+        dishService.deleteById(Collections.emptyList());
+
+        verify(dishMapper, never()).deleteById(anyList());
+    }
+
+    @Test
+    void deleteByIdCallsMapperWhenIdsPresent() {
+        List<Integer> ids = List.of(1, 2);
+
+        dishService.deleteById(ids);
+
+        verify(dishMapper).deleteById(ids);
+    }
+
+    @Test
+    void updateThrowsWhenDishIsNull() {
+        assertThrows(IllegalArgumentException.class, () -> dishService.update(null));
+        verify(dishMapper, never()).update(any(Dish.class));
+    }
+
+    @Test
+    void updateThrowsWhenIdIsNull() {
+        Dish dish = new Dish();
+        dish.setName("招牌烤冷面");
+
+        assertThrows(IllegalArgumentException.class, () -> dishService.update(dish));
+        verify(dishMapper, never()).update(any(Dish.class));
+    }
+
+    @Test
+    void updateThrowsWhenStallIdProvided() {
+        Dish dish = new Dish();
+        dish.setId(1);
+        dish.setStallId(2);
+
+        assertThrows(IllegalArgumentException.class, () -> dishService.update(dish));
+        verify(dishMapper, never()).update(any(Dish.class));
+    }
+
+    @Test
+    void updateThrowsWhenDishDoesNotExist() {
+        Dish dish = new Dish();
+        dish.setId(1);
+        when(dishMapper.find(any(Dish.class))).thenReturn(Collections.emptyList());
+
+        assertThrows(DishNotExistException.class, () -> dishService.update(dish));
+        verify(dishMapper, never()).update(any(Dish.class));
+    }
+
+    @Test
+    void updateCallsMapperWhenDishIsValid() {
+        Dish dish = new Dish();
+        dish.setId(1);
+        dish.setName("改名后菜品");
+        when(dishMapper.find(any(Dish.class))).thenReturn(List.of(createDish()));
+
+        dishService.update(dish);
+
+        verify(dishMapper).update(dish);
     }
 
     private Dish createDish() {

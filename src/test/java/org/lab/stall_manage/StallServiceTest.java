@@ -1,5 +1,7 @@
 package org.lab.stall_manage;
 
+import org.lab.stall_manage.exception.StallNotExistException;
+import org.lab.stall_manage.mapper.DishMapper;
 import org.lab.stall_manage.mapper.StallMapper;
 import org.lab.stall_manage.pojo.Stall;
 import org.lab.stall_manage.service.impl.StallServiceImpl;
@@ -10,10 +12,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalTime;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -21,6 +28,9 @@ import static org.mockito.Mockito.when;
 public class StallServiceTest {
     @Mock
     private StallMapper stallMapper;
+
+    @Mock
+    private DishMapper dishMapper;
 
     @InjectMocks
     private StallServiceImpl stallService;
@@ -56,6 +66,67 @@ public class StallServiceTest {
 
         assertEquals(1, stall.getCurrentStatus());
         verify(stallMapper).add(stall);
+    }
+
+    @Test
+    void deleteDoesNothingWhenIdsIsNull() {
+        stallService.delete(null);
+
+        verify(stallMapper, never()).delete(anyList());
+        verify(dishMapper, never()).deleteByStallId(anyList());
+    }
+
+    @Test
+    void deleteDoesNothingWhenIdsIsEmpty() {
+        stallService.delete(Collections.emptyList());
+
+        verify(stallMapper, never()).delete(anyList());
+        verify(dishMapper, never()).deleteByStallId(anyList());
+    }
+
+    @Test
+    void deleteCallsBothMappersWhenIdsPresent() {
+        List<Integer> ids = List.of(1, 2);
+
+        stallService.delete(ids);
+
+        verify(stallMapper).delete(ids);
+        verify(dishMapper).deleteByStallId(ids);
+    }
+
+    @Test
+    void updateThrowsWhenStallIsNull() {
+        assertThrows(IllegalArgumentException.class, () -> stallService.update(null));
+        verify(stallMapper, never()).update(any(Stall.class));
+    }
+
+    @Test
+    void updateThrowsWhenIdIsNull() {
+        Stall stall = createStall();
+
+        assertThrows(IllegalArgumentException.class, () -> stallService.update(stall));
+        verify(stallMapper, never()).update(any(Stall.class));
+    }
+
+    @Test
+    void updateThrowsWhenStallDoesNotExist() {
+        Stall stall = createStall();
+        stall.setId(1);
+        when(stallMapper.find(any(Stall.class))).thenReturn(Collections.emptyList());
+
+        assertThrows(StallNotExistException.class, () -> stallService.update(stall));
+        verify(stallMapper, never()).update(any(Stall.class));
+    }
+
+    @Test
+    void updateCallsMapperWhenStallExists() {
+        Stall stall = createStall();
+        stall.setId(1);
+        when(stallMapper.find(any(Stall.class))).thenReturn(List.of(createStall()));
+
+        stallService.update(stall);
+
+        verify(stallMapper).update(stall);
     }
 
     private Stall createStall() {

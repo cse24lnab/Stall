@@ -7,6 +7,7 @@ import org.lab.stall_manage.annotation.RequireRole;
 import org.lab.stall_manage.config.JwtProperties;
 import org.lab.stall_manage.context.BaseContext;
 import org.lab.stall_manage.context.CurrentUser;
+import org.lab.stall_manage.exception.ForbiddenException;
 import org.lab.stall_manage.pojo.enums.UserRole;
 import org.lab.stall_manage.utils.JwtToken;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,19 +43,20 @@ public class LoginInterceptor implements HandlerInterceptor {
             log.info("令牌校验通过");
             return true;
         }
-        catch (IllegalAccessException ex)
+        catch (ForbiddenException ex)
         {
             BaseContext.RemoveCurrentUser();
-            //todo 异常
             log.info("权限不足", ex);
+            //403无权限
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             return false;
         }
         catch (Exception ex)
         {
+            //todo 自定义异常
             BaseContext.RemoveCurrentUser();
-            //todo 异常
             log.info("令牌校验失败", ex);
+            //401登录校验失败
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return false;
         }
@@ -66,7 +68,7 @@ public class LoginInterceptor implements HandlerInterceptor {
         BaseContext.RemoveCurrentUser();
     }
 
-    private void checkRole(RequireRole requireRole, CurrentUser currentUser) throws IllegalAccessException
+    private void checkRole(RequireRole requireRole, CurrentUser currentUser)
     {
         if (requireRole == null)
         {
@@ -74,7 +76,7 @@ public class LoginInterceptor implements HandlerInterceptor {
         }
         if (!Arrays.asList(requireRole.value()).contains(currentUser.getRole()))
         {
-            throw new IllegalAccessException("无访问权限");
+            throw new ForbiddenException("无访问权限");
         }
     }
 
@@ -95,7 +97,6 @@ public class LoginInterceptor implements HandlerInterceptor {
         {
             throw new IllegalArgumentException("令牌为空");
         }
-
         return token;
     }
 

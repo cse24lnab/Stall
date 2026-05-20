@@ -102,7 +102,7 @@ public class DishServiceImpl implements DishService {
         //同add,dish首先要存在
         if(findDish == null)
         {
-            throw  new DishNotExistException("菜品不存在");
+            throw new DishNotExistException("菜品不存在");
         }
     }
 }

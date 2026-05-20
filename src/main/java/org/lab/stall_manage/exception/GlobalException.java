@@ -1,7 +1,6 @@
 package org.lab.stall_manage.exception;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.auth.UsernamePasswordCredentials;
 import org.lab.stall_manage.pojo.Result;
 import org.springframework.context.MessageSourceResolvable;
 import org.springframework.dao.DuplicateKeyException;
@@ -33,7 +32,7 @@ public class GlobalException {
     {
         FieldError fieldError = ex.getBindingResult().getFieldError();
         String msg=(fieldError!=null)?fieldError.getDefaultMessage():"参数校验失败";
-        log.error("Request body validation failed", ex);
+        log.warn("GlobalException handled: type={}, msg={}", ex.getClass().getSimpleName(), msg);
         return Result.error(msg);
     }
 
@@ -53,7 +52,7 @@ public class GlobalException {
             msg = errors.get(0).getDefaultMessage();
         }
 
-        log.error("Handler method validation failed", ex);
+        log.warn("GlobalException handled: type={}, msg={}", ex.getClass().getSimpleName(), msg);
         return Result.error(msg);
     }
 
@@ -66,7 +65,7 @@ public class GlobalException {
         String msg = StringUtils.hasText(ex.getName())
                 ? "参数 " + ex.getName() + " 类型错误"
                 : "参数类型错误";
-        log.error("Method argument type mismatch", ex);
+        log.warn("GlobalException handled: type={}, msg={}", ex.getClass().getSimpleName(), msg);
         return Result.error(msg);
     }
 
@@ -77,7 +76,7 @@ public class GlobalException {
     public Result<?> hdlMissingServletRequestParameterEx(MissingServletRequestParameterException ex)
     {
         String msg = "缺少必要参数: " + ex.getParameterName();
-        log.error("Missing servlet request parameter", ex);
+        log.warn("GlobalException handled: type={}, msg={}", ex.getClass().getSimpleName(), msg);
         return Result.error(msg);
     }
 
@@ -88,7 +87,7 @@ public class GlobalException {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public Result<?> hdlHttpMessageNotReadableEx(HttpMessageNotReadableException ex)
     {
-        log.error("Request body not readable", ex);
+        log.warn("GlobalException handled: type={}, msg={}", ex.getClass().getSimpleName(), "请求体格式错误");
         return Result.error("请求体格式错误");
     }
 
@@ -98,16 +97,18 @@ public class GlobalException {
     @ExceptionHandler(DuplicateKeyException.class)
     public Result<?> hdlDupliKeyEx(DuplicateKeyException ex)
     {
-        log.error("Duplicate key exception", ex);
         String msg = ex.getMessage();
         if (!StringUtils.hasText(msg)) {
+            log.warn("GlobalException handled: type={}, msg={}", ex.getClass().getSimpleName(), "数据已存在");
             return Result.error("数据已存在");
         }
 
         Matcher matcher = DUPLICATE_ENTRY_PATTERN.matcher(msg);
         if (matcher.find() && StringUtils.hasText(matcher.group(1))) {
+            log.warn("GlobalException handled: type={}, msg={}", ex.getClass().getSimpleName(), matcher.group(1) + "已存在");
             return Result.error(matcher.group(1) + "已存在");
         }
+        log.warn("GlobalException handled: type={}, msg={}", ex.getClass().getSimpleName(), "数据已存在");
         return Result.error("数据已存在");
     }
 
@@ -118,7 +119,7 @@ public class GlobalException {
     @ExceptionHandler(StallNotExistException.class)
     public Result<?> hdlStallNExistEx(StallNotExistException ex)
     {
-        log.error("Stall not found", ex);
+        log.warn("GlobalException handled: type={}, msg={}", ex.getClass().getSimpleName(), ex.getMessage());
         return Result.error(ex.getMessage());
     }
 
@@ -129,7 +130,7 @@ public class GlobalException {
     @ExceptionHandler(DishNotExistException.class)
     public Result<?> hdlDishNExistEx(DishNotExistException ex)
     {
-        log.error("dish not found");
+        log.warn("GlobalException handled: type={}, msg={}", ex.getClass().getSimpleName(), ex.getMessage());
         return Result.error(ex.getMessage());
     }
 
@@ -139,7 +140,17 @@ public class GlobalException {
     @ExceptionHandler(UserNotExistException.class)
     public Result<?> hdleUserNExistEx(UserNotExistException ex)
     {
-        log.error("user not found");
+        log.warn("GlobalException handled: type={}, msg={}", ex.getClass().getSimpleName(), ex.getMessage());
+        return Result.error(ex.getMessage());
+    }
+
+    /**
+     *权限不足
+     */
+    @ExceptionHandler(ForbiddenException.class)
+    public Result<?> hdlForbidEx(ForbiddenException ex)
+    {
+        log.warn("GlobalException handled: type={}, msg={}", ex.getClass().getSimpleName(), ex.getMessage());
         return Result.error(ex.getMessage());
     }
 
@@ -148,7 +159,7 @@ public class GlobalException {
      */
     @ExceptionHandler(IllegalArgumentException.class)
     public Result<?> hdlIllegalArgEx(IllegalArgumentException ex) {
-        log.error("Illegal argument", ex);
+        log.warn("GlobalException handled: type={}, msg={}", ex.getClass().getSimpleName(), ex.getMessage());
         return Result.error(ex.getMessage());
     }
 
@@ -156,7 +167,7 @@ public class GlobalException {
     public Result<?> hdleRuntimeEx(RuntimeException ex)
     {
         String msg=ex.getMessage();
-        log.error("Runtime exception", ex);
+        log.error("GlobalException handled unexpected error: type={}, msg={}", ex.getClass().getSimpleName(), ex.getMessage(), ex);
         if(!StringUtils.hasText(msg))
         {
             return Result.error("操作失败");
@@ -167,9 +178,9 @@ public class GlobalException {
     @ExceptionHandler(Exception.class)
     public Result<?> hdleEx(Exception ex)
     {
-        log.error("Unhandled exception", ex);
+        log.error("GlobalException handled unexpected error: type={}, msg={}", ex.getClass().getSimpleName(), ex.getMessage(), ex);
         return Result.error("服务器出错，稍后再试");
     }
 
-    //todo 捕获四个异常
+    //todo 捕获两个异常
 }

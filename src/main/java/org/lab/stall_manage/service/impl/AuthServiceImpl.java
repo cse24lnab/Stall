@@ -3,6 +3,7 @@ package org.lab.stall_manage.service.impl;
 import org.lab.stall_manage.config.JwtProperties;
 import org.lab.stall_manage.dto.LoginRequest;
 import org.lab.stall_manage.dto.RegisterRequest;
+import org.lab.stall_manage.exception.UserNotExistException;
 import org.lab.stall_manage.mapper.UserMapper;
 import org.lab.stall_manage.pojo.User;
 import org.lab.stall_manage.service.AuthService;
@@ -51,15 +52,14 @@ public class AuthServiceImpl implements AuthService {
         User user = userMapper.findByUsername(loginRequest.getUsername());
         if(user == null)
         {
-            //todo 用别的异常代替 usernotexistex
-            throw new RuntimeException("用户不存在");
+            throw new UserNotExistException("用户不存在");
         }
         boolean matches = passwordEncoder.matches(loginRequest.getPassword(), user.getPasswordHash());
         if(matches)
         {
             return this.getLoginResponse(user);
         }
-        //todo 异常
+        //todo 自定义异常
         throw new RuntimeException("账号或者密码错误");
     }
 

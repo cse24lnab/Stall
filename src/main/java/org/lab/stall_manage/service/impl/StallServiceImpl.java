@@ -74,6 +74,7 @@ public class StallServiceImpl implements StallService {
     {
         detectUpdate(stall);
         stallMapper.update(stall);
+        //update就不用修改菜品里的信息，因为stallId不会变
     }
 
     private void detectUpdate(Stall stall)

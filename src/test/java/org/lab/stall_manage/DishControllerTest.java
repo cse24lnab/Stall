@@ -25,8 +25,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -149,6 +151,45 @@ class DishControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.msg").value("摊位不存在"));
+    }
+
+    @Test
+    void deleteDishesReturnsSuccess() throws Exception {
+        mockMvc.perform(delete("/dishes").param("ids", "1").param("ids", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(1))
+                .andExpect(jsonPath("$.msg").value("success"));
+
+        verify(dishService).deleteById(List.of(1, 2));
+    }
+
+    @Test
+    void putDishesReturnsSuccess() throws Exception {
+        Dish dish = new Dish();
+        dish.setName("改名后菜品");
+
+        mockMvc.perform(put("/dishes/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dish)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(1))
+                .andExpect(jsonPath("$.msg").value("success"));
+
+        verify(dishService).update(any(Dish.class));
+    }
+
+    @Test
+    void putDishesRejectsMismatchedId() throws Exception {
+        Dish dish = new Dish();
+        dish.setId(2);
+        dish.setName("改名后菜品");
+
+        mockMvc.perform(put("/dishes/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dish)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.msg").value("id不一致"));
     }
 
     private Dish createValidDish() {
