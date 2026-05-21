@@ -1,8 +1,11 @@
 package org.lab.stall_manage.service.impl;
 
 import org.lab.stall_manage.config.JwtProperties;
+import org.lab.stall_manage.context.BaseContext;
+import org.lab.stall_manage.context.CurrentUser;
 import org.lab.stall_manage.dto.LoginRequest;
 import org.lab.stall_manage.dto.RegisterRequest;
+import org.lab.stall_manage.exception.ForbiddenException;
 import org.lab.stall_manage.exception.UserNotExistException;
 import org.lab.stall_manage.mapper.UserMapper;
 import org.lab.stall_manage.pojo.User;
@@ -10,12 +13,14 @@ import org.lab.stall_manage.service.AuthService;
 import org.lab.stall_manage.utils.JwtToken;
 import org.lab.stall_manage.vo.AuthResponse;
 import org.lab.stall_manage.vo.LoginResponse;
+import org.lab.stall_manage.vo.MeResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -44,7 +49,8 @@ public class AuthServiceImpl implements AuthService {
         user.setPhone(registerRequest.getPhone());
         userMapper.add(user);
         //登录默认激活，主要是不知道不默认怎么写..
-        return new AuthResponse(user.getId(),user.getUsername(),user.getNickname(),user.getPhone(),"ACTIVE");
+        return new AuthResponse(
+                user.getId(),user.getUsername(),user.getNickname(),user.getPhone(),"ACTIVE");
     }
 
     @Override
@@ -61,6 +67,27 @@ public class AuthServiceImpl implements AuthService {
         }
         //todo 自定义异常
         throw new RuntimeException("账号或者密码错误");
+    }
+
+    @Override
+    public Optional<MeResponse> findMe() {
+        CurrentUser currentUser = BaseContext.getCurrentUser();
+        //防御性编程
+        if(currentUser == null || currentUser.getId() == null)
+        {
+            throw new RuntimeException("登录过期");
+        }
+        Integer id=currentUser.getId();
+        User user = userMapper.find(id);
+        if(user == null)
+        {
+            return Optional.empty();
+        }
+        MeResponse meResponse=new MeResponse(
+                user.getId(),user.getUsername(),user.getNickname(),user.getPhone(),
+                user.getAvatarFileId(),user.getAvatarUrl(),user.getRole(),user.getStatus().name(),
+                user.getCreateTime(),user.getUpdateTime());
+        return Optional.of(meResponse);
     }
 
     private boolean checkRegister(RegisterRequest registerRequest) {

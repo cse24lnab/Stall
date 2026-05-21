@@ -7,7 +7,28 @@
     <insert id="add" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO `user`(`username`,`password_hash`,`nickname`,`phone`,`avatar_file_id`,`avatar_url`,`create_time`,`update_time`) VALUES (#{username},#{passwordHash},#{nickname},#{phone},#{avatarFileId},#{avatarUrl},#{createTime},#{updateTime});
     </insert>
+    <update id="update">
+        UPDATE `user`
+        <set>
+            <if test="passwordHash !=null and passwordHash !=''">
+                `password_hash`=#{passwordHash},
+            </if>
+            <if test="nickname != null and nickname != ''">
+                `nickname`=#{nickname},
+            </if>
+            <if test="phone != null and phone !=''">
+                `phone`=#{phone},
+            </if>
+            <if test="avatarFileId !=null">
+                `avatar_file_id`=#{avatarFileId},
+            </if>
+        </set>
+        WHERE `id`=#{id} AND `is_delete`=0
+    </update>
     <select id="findByUsername" resultType="org.lab.stall_manage.pojo.User">
         SELECT * FROM user WHERE username=#{username}
+    </select>
+    <select id="find" resultType="org.lab.stall_manage.pojo.User">
+        SELECT * FROM user WHERE id=#{id} AND is_delete=0
     </select>
 </mapper>

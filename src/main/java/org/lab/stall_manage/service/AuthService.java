@@ -5,7 +5,10 @@ import org.lab.stall_manage.dto.LoginRequest;
 import org.lab.stall_manage.dto.RegisterRequest;
 import org.lab.stall_manage.vo.AuthResponse;
 import org.lab.stall_manage.vo.LoginResponse;
+import org.lab.stall_manage.vo.MeResponse;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 public interface AuthService {
     /**
@@ -17,4 +20,9 @@ public interface AuthService {
      * 用户登录
      */
     LoginResponse login(LoginRequest loginRequest);
+
+    /**
+     * 用户查看自身信息
+     */
+    Optional<MeResponse> findMe();
 }

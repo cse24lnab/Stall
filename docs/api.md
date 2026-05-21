@@ -132,7 +132,24 @@ Authorization: Bearer <access_token>
 | `createTime` | string | 是 | 创建时间，ISO-8601 |
 | `updateTime` | string | 是 | 更新时间，ISO-8601 |
 
-## 4.2 File
+## 4.2 MerchantApplication
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `id` | integer | 是 | 商家申请 ID |
+| `userId` | integer | 是 | 申请人用户 ID |
+| `merchantName` | string | 是 | 商家名称 |
+| `contactPhone` | string | 是 | 联系电话 |
+| `description` | string | 否 | 申请说明 |
+| `status` | string | 是 | `PENDING` / `APPROVED` / `REJECTED` |
+| `reviewerId` | integer | 否 | 审核管理员用户 ID |
+| `reviewReason` | string | 否 | 审核说明 |
+| `reviewedAt` | string | 否 | 审核时间，ISO-8601 |
+| `createTime` | string | 是 | 创建时间 |
+| `updateTime` | string | 是 | 更新时间 |
+| `isDelete` | integer | 是 | `0=未删除`，`1=已删除` |
+
+## 4.3 File
 
 | 字段 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
@@ -144,7 +161,7 @@ Authorization: Bearer <access_token>
 | `uploadedBy` | integer | 是 | 上传人用户 ID |
 | `createTime` | string | 是 | 上传时间 |
 
-## 4.3 Stall
+## 4.4 Stall
 
 | 字段 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
@@ -164,7 +181,7 @@ Authorization: Bearer <access_token>
 | `createTime` | string | 是 | 创建时间 |
 | `updateTime` | string | 是 | 更新时间 |
 
-## 4.4 Dish
+## 4.5 Dish
 
 | 字段 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
@@ -180,7 +197,7 @@ Authorization: Bearer <access_token>
 | `createTime` | string | 是 | 创建时间 |
 | `updateTime` | string | 是 | 更新时间 |
 
-## 4.5 CartItem
+## 4.6 CartItem
 
 | 字段 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
@@ -197,7 +214,7 @@ Authorization: Bearer <access_token>
 | `createTime` | string | 是 | 创建时间 |
 | `updateTime` | string | 是 | 更新时间 |
 
-## 4.6 Order
+## 4.7 Order
 
 | 字段 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
@@ -213,7 +230,7 @@ Authorization: Bearer <access_token>
 | `createTime` | string | 是 | 创建时间 |
 | `updateTime` | string | 是 | 更新时间 |
 
-## 4.7 OrderItem
+## 4.8 OrderItem
 
 | 字段 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
@@ -232,6 +249,10 @@ Authorization: Bearer <access_token>
 | 认证 | `GET` | `/auth/me` | 获取当前登录用户 | 规划接口 |
 | 用户 | `PUT` | `/users/me` | 修改个人资料 | 规划接口 |
 | 用户 | `PUT` | `/users/me/password` | 修改密码 | 规划接口 |
+| 商家申请 | `POST` | `/merchant-applications` | 提交商家申请 | 规划接口 |
+| 商家申请 | `GET` | `/merchant-applications/me` | 查看自己的商家申请 | 规划接口 |
+| 商家申请 | `GET` | `/admin/merchant-applications` | 管理员查看商家申请列表 | 规划接口 |
+| 商家申请 | `PATCH` | `/admin/merchant-applications/{id}/review` | 管理员审批商家申请 | 规划接口 |
 | 文件 | `POST` | `/files` | 通用文件上传 | 规划接口 |
 | 文件 | `GET` | `/files/{id}` | 文件元数据 | 规划接口 |
 | 文件 | `DELETE` | `/files/{id}` | 删除文件 | 规划接口 |
@@ -262,6 +283,7 @@ Authorization: Bearer <access_token>
 
 - 用途：普通用户注册
 - 权限：匿名
+- 说明：该接口只注册普通用户，不支持直接注册商家账号；申请成为商家需走商家申请 / 管理员审批流程
 
 请求体：
 
@@ -436,9 +458,205 @@ Authorization: Bearer <access_token>
 }
 ```
 
-## 8. 文件接口
+## 8. 商家申请接口
 
-## 8.1 `POST /files`
+## 8.1 `POST /merchant-applications`
+
+- 用途：当前登录用户提交成为商家的申请
+- 权限：已登录用户，推荐 `USER`
+- 说明：
+  - 该接口不会直接创建商家账号，只会创建一条待审核申请
+  - 已经是 `MERCHANT` 的用户不能再次申请
+  - 已存在 `PENDING` 申请时不能重复提交
+
+请求体：
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `merchantName` | string | 是 | 商家名称 |
+| `contactPhone` | string | 是 | 联系电话 |
+| `description` | string | 否 | 申请说明 |
+
+请求示例：
+
+```json
+{
+  "merchantName": "张记小吃",
+  "contactPhone": "13800000000",
+  "description": "申请成为商家，主要经营煎饼和烤冷面"
+}
+```
+
+成功响应：
+
+```json
+{
+  "code": 1,
+  "msg": "success",
+  "data": {
+    "id": 1001,
+    "userId": 101,
+    "merchantName": "张记小吃",
+    "contactPhone": "13800000000",
+    "description": "申请成为商家，主要经营煎饼和烤冷面",
+    "status": "PENDING",
+    "reviewerId": null,
+    "reviewReason": null,
+    "reviewedAt": null,
+    "createTime": "2026-05-03T15:00:00",
+    "updateTime": "2026-05-03T15:00:00"
+  }
+}
+```
+
+失败示例：
+
+```json
+{
+  "code": 0,
+  "msg": "已有待审核的商家申请",
+  "data": null
+}
+```
+
+## 8.2 `GET /merchant-applications/me`
+
+- 用途：查看当前登录用户最近一次商家申请
+- 权限：已登录用户
+- 说明：没有提交过申请时，`data` 可为 `null`
+
+成功响应：
+
+```json
+{
+  "code": 1,
+  "msg": "success",
+  "data": {
+    "id": 1001,
+    "userId": 101,
+    "merchantName": "张记小吃",
+    "contactPhone": "13800000000",
+    "description": "申请成为商家，主要经营煎饼和烤冷面",
+    "status": "PENDING",
+    "reviewerId": null,
+    "reviewReason": null,
+    "reviewedAt": null,
+    "createTime": "2026-05-03T15:00:00",
+    "updateTime": "2026-05-03T15:00:00"
+  }
+}
+```
+
+## 8.3 `GET /admin/merchant-applications`
+
+- 用途：管理员查看商家申请列表
+- 权限：`ADMIN`
+- 说明：支持按申请状态筛选
+
+查询参数：
+
+| 参数 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `status` | string | 否 | `PENDING` / `APPROVED` / `REJECTED` |
+| `page` | integer | 否 | 页码 |
+| `pageSize` | integer | 否 | 每页数量 |
+
+成功响应示例：
+
+```json
+{
+  "code": 1,
+  "msg": "success",
+  "data": {
+    "list": [
+      {
+        "id": 1001,
+        "userId": 101,
+        "merchantName": "张记小吃",
+        "contactPhone": "13800000000",
+        "description": "申请成为商家，主要经营煎饼和烤冷面",
+        "status": "PENDING",
+        "reviewerId": null,
+        "reviewReason": null,
+        "reviewedAt": null,
+        "createTime": "2026-05-03T15:00:00",
+        "updateTime": "2026-05-03T15:00:00"
+      }
+    ],
+    "total": 1,
+    "page": 1,
+    "pageSize": 10
+  }
+}
+```
+
+## 8.4 `PATCH /admin/merchant-applications/{id}/review`
+
+- 用途：管理员审批商家申请
+- 权限：`ADMIN`
+- 说明：
+  - 只有 `PENDING` 状态的申请可以审批
+  - 审批通过后，申请状态改为 `APPROVED`，申请人的 `role` 改为 `MERCHANT`
+  - 审批拒绝后，申请状态改为 `REJECTED`，申请人的角色不变
+  - 由于 JWT 中包含角色信息，审批通过后用户需要重新登录，新的 token 才会携带 `MERCHANT` 角色
+
+路径参数：
+
+| 参数 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `id` | integer | 是 | 商家申请 ID |
+
+请求体：
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `status` | string | 是 | 只允许 `APPROVED` 或 `REJECTED` |
+| `reviewReason` | string | 否 | 审核说明 |
+
+请求示例：
+
+```json
+{
+  "status": "APPROVED",
+  "reviewReason": "资料完整，审核通过"
+}
+```
+
+成功响应：
+
+```json
+{
+  "code": 1,
+  "msg": "success",
+  "data": {
+    "id": 1001,
+    "userId": 101,
+    "merchantName": "张记小吃",
+    "contactPhone": "13800000000",
+    "description": "申请成为商家，主要经营煎饼和烤冷面",
+    "status": "APPROVED",
+    "reviewerId": 1,
+    "reviewReason": "资料完整，审核通过",
+    "reviewedAt": "2026-05-03T16:00:00",
+    "createTime": "2026-05-03T15:00:00",
+    "updateTime": "2026-05-03T16:00:00"
+  }
+}
+```
+
+失败示例：
+
+```json
+{
+  "code": 0,
+  "msg": "该申请已审核，不能重复处理",
+  "data": null
+}
+```
+
+## 9. 文件接口
+
+## 9.1 `POST /files`
 
 - 用途：通用文件上传
 - 权限：已登录用户
@@ -469,19 +687,19 @@ Authorization: Bearer <access_token>
 }
 ```
 
-## 8.2 `GET /files/{id}`
+## 9.2 `GET /files/{id}`
 
 - 用途：查询文件元数据
 - 权限：已登录用户
 
-## 8.3 `DELETE /files/{id}`
+## 9.3 `DELETE /files/{id}`
 
 - 用途：删除或失效文件
 - 权限：文件所有者、管理员
 
-## 9. 摊位接口
+## 10. 摊位接口
 
-## 9.1 `GET /stalls`
+## 10.1 `GET /stalls`
 
 - 用途：查询摊位列表
 - 权限：公开；若使用 `mine=true`，则要求 `MERCHANT` 或 `ADMIN`
@@ -524,12 +742,12 @@ Authorization: Bearer <access_token>
 }
 ```
 
-## 9.2 `GET /stalls/{id}`
+## 10.2 `GET /stalls/{id}`
 
 - 用途：查询单个摊位详情
 - 权限：公开
 
-## 9.3 `POST /stalls`
+## 10.3 `POST /stalls`
 
 - 用途：创建摊位
 - 权限：`MERCHANT`、`ADMIN`
@@ -565,12 +783,12 @@ Authorization: Bearer <access_token>
 }
 ```
 
-## 9.4 `PUT /stalls/{id}`
+## 10.4 `PUT /stalls/{id}`
 
 - 用途：更新摊位信息
 - 权限：该摊位所属商家、管理员
 
-## 9.5 `DELETE /stalls/{id}`
+## 10.5 `DELETE /stalls/{id}`
 
 - 用途：逻辑删除摊位
 - 权限：该摊位所属商家、管理员
@@ -586,9 +804,9 @@ Authorization: Bearer <access_token>
 }
 ```
 
-## 10. 菜品接口
+## 11. 菜品接口
 
-## 10.1 `GET /dishes`
+## 11.1 `GET /dishes`
 
 - 用途：查询菜品列表
 - 权限：公开
@@ -632,12 +850,12 @@ Authorization: Bearer <access_token>
 }
 ```
 
-## 10.2 `GET /dishes/{id}`
+## 11.2 `GET /dishes/{id}`
 
 - 用途：查询菜品详情
 - 权限：公开
 
-## 10.3 `POST /dishes`
+## 11.3 `POST /dishes`
 
 - 用途：创建菜品
 - 权限：该摊位所属商家、管理员
@@ -677,12 +895,12 @@ Authorization: Bearer <access_token>
 }
 ```
 
-## 10.4 `PUT /dishes/{id}`
+## 11.4 `PUT /dishes/{id}`
 
 - 用途：完整更新菜品
 - 权限：该摊位所属商家、管理员
 
-## 10.5 `PATCH /dishes/{id}`
+## 11.5 `PATCH /dishes/{id}`
 
 - 用途：更新菜品局部状态，例如售罄状态
 - 权限：该摊位所属商家、管理员
@@ -695,15 +913,15 @@ Authorization: Bearer <access_token>
 }
 ```
 
-## 10.6 `DELETE /dishes/{id}`
+## 11.6 `DELETE /dishes/{id}`
 
 - 用途：逻辑删除菜品
 - 权限：该摊位所属商家、管理员
 - 说明：底层建议把 `isDelete` 设置为 `1`
 
-## 11. 购物车接口
+## 12. 购物车接口
 
-## 11.1 `GET /users/me/cart-items`
+## 12.1 `GET /users/me/cart-items`
 
 - 用途：获取当前用户购物车
 - 权限：`USER`
@@ -733,7 +951,7 @@ Authorization: Bearer <access_token>
 }
 ```
 
-## 11.2 `POST /users/me/cart-items`
+## 12.2 `POST /users/me/cart-items`
 
 - 用途：加入购物车
 - 权限：`USER`
@@ -764,7 +982,7 @@ Authorization: Bearer <access_token>
 }
 ```
 
-## 11.3 `PUT /users/me/cart-items/{itemId}`
+## 12.3 `PUT /users/me/cart-items/{itemId}`
 
 - 用途：修改购物车项数量
 - 权限：`USER`
@@ -777,19 +995,19 @@ Authorization: Bearer <access_token>
 }
 ```
 
-## 11.4 `DELETE /users/me/cart-items/{itemId}`
+## 12.4 `DELETE /users/me/cart-items/{itemId}`
 
 - 用途：删除购物车单项
 - 权限：`USER`
 
-## 11.5 `DELETE /users/me/cart-items`
+## 12.5 `DELETE /users/me/cart-items`
 
 - 用途：清空购物车
 - 权限：`USER`
 
-## 12. 订单接口
+## 13. 订单接口
 
-## 12.1 `POST /orders`
+## 13.1 `POST /orders`
 
 - 用途：从当前购物车提交订单
 - 权限：`USER`
@@ -839,7 +1057,7 @@ Authorization: Bearer <access_token>
 }
 ```
 
-## 12.2 `GET /orders`
+## 13.2 `GET /orders`
 
 - 用途：查询订单列表
 - 权限：
@@ -860,12 +1078,12 @@ Authorization: Bearer <access_token>
 | `dateTo` | string | 否 | 结束时间 |
 | `mine` | boolean | 否 | 是否只看当前登录人相关订单，默认 `true` |
 
-## 12.3 `GET /orders/{id}`
+## 13.3 `GET /orders/{id}`
 
 - 用途：查询订单详情
 - 权限：订单所属用户、摊位所属商家、管理员
 
-## 12.4 `PATCH /orders/{id}`
+## 13.4 `PATCH /orders/{id}`
 
 - 用途：更新订单状态
 - 权限：依赖状态流转规则
@@ -886,7 +1104,7 @@ Authorization: Bearer <access_token>
 }
 ```
 
-### 12.4.1 订单状态流转规则
+### 13.4.1 订单状态流转规则
 
 | 操作者 | 允许流转 |
 | --- | --- |
@@ -908,7 +1126,7 @@ Authorization: Bearer <access_token>
 }
 ```
 
-## 13. 现有代码与文档差异说明
+## 14. 现有代码与文档差异说明
 
 当前项目中已经存在以下实际接口：
 
@@ -923,11 +1141,12 @@ Authorization: Bearer <access_token>
 - 当前列表接口返回的是数组，不是分页对象
 - 当前 `stall` 和 `dish` 只实现了查和增，尚未实现改和删
 - 当前没有登录、文件上传、购物车、订单相关代码
+- 商家申请 / 审批接口属于规划新增，当前代码尚未实现
 - 当前 `User`、`Order` 仍为空实体，需要按本文档补齐
 
-## 14. 端到端业务流程示例
+## 15. 端到端业务流程示例
 
-## 14.1 普通用户下单流程
+## 15.1 普通用户下单流程
 
 1. 用户注册：`POST /auth/register`
 2. 用户登录：`POST /auth/login`
@@ -940,26 +1159,31 @@ Authorization: Bearer <access_token>
 9. 查看订单详情：`GET /orders/{id}`
 10. 商家备餐完成后，用户确认取餐：`PATCH /orders/{id}`
 
-## 14.2 商家管理流程
+## 15.2 商家管理流程
 
-1. 商家登录：`POST /auth/login`
-2. 上传摊位封面：`POST /files`
-3. 创建摊位：`POST /stalls`
-4. 上传菜品图片：`POST /files`
-5. 创建菜品：`POST /dishes`
-6. 修改菜品信息：`PUT /dishes/{id}`
-7. 菜品售罄时更新状态：`PATCH /dishes/{id}`
-8. 查看自己摊位订单：`GET /orders?mine=true`
-9. 接单制作：`PATCH /orders/{id}` 设置为 `PREPARING`
-10. 可取餐时更新状态：`PATCH /orders/{id}` 设置为 `READY_FOR_PICKUP`
+1. 普通用户注册：`POST /auth/register`
+2. 普通用户登录：`POST /auth/login`
+3. 提交商家申请：`POST /merchant-applications`
+4. 管理员查看待审核申请：`GET /admin/merchant-applications?status=PENDING`
+5. 管理员审批通过：`PATCH /admin/merchant-applications/{id}/review`
+6. 用户重新登录：`POST /auth/login`，获取携带 `MERCHANT` 角色的新 token
+7. 上传摊位封面：`POST /files`
+8. 创建摊位：`POST /stalls`
+9. 上传菜品图片：`POST /files`
+10. 创建菜品：`POST /dishes`
+11. 修改菜品信息：`PUT /dishes/{id}`
+12. 菜品售罄时更新状态：`PATCH /dishes/{id}`
+13. 查看自己摊位订单：`GET /orders?mine=true`
+14. 接单制作：`PATCH /orders/{id}` 设置为 `PREPARING`
+15. 可取餐时更新状态：`PATCH /orders/{id}` 设置为 `READY_FOR_PICKUP`
 
-## 15. 建议的后续实现顺序
+## 16. 建议的后续实现顺序
 
 建议按下面顺序推进代码实现：
 
 1. 登录鉴权与 `User` 实体
-2. 文件上传接口
-3. `stall` / `dish` 的完整 CRUD
-4. 购物车接口
-5. 订单提交与订单状态流转
-
+2. 商家申请 / 审核流程
+3. 文件上传接口
+4. `stall` / `dish` 的完整 CRUD
+5. 购物车接口
+6. 订单提交与订单状态流转

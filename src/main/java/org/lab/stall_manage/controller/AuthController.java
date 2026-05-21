@@ -8,7 +8,9 @@ import org.lab.stall_manage.pojo.Result;
 import org.lab.stall_manage.service.AuthService;
 import org.lab.stall_manage.vo.AuthResponse;
 import org.lab.stall_manage.vo.LoginResponse;
+import org.lab.stall_manage.vo.MeResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,5 +30,11 @@ public class AuthController {
     @PostMapping("/auth/login")
     public Result<LoginResponse> login(@RequestBody @Valid LoginRequest loginRequest) {
          return Result.success(authService.login(loginRequest));
+    }
+
+    @GetMapping("/auth/me")
+    public Result<MeResponse> findMe()
+    {
+        return Result.success(authService.findMe().orElse(null));
     }
 }
