@@ -35,6 +35,7 @@ class AuthControllerTest {
     @Mock
     private AuthService authService;
 
+    //伪装postman
     private MockMvc mockMvc;
 
     @BeforeEach

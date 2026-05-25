@@ -41,7 +41,7 @@ public class StallController {
 
     @RequireRole({UserRole.ADMIN})
     @PostMapping("/stalls")
-    public Result<Stall> add(@RequestBody @Valid Stall stall)
+    public Result<?> add(@RequestBody @Valid Stall stall)
     {
         log.info("增加小摊，名字叫{}",stall.getName());
         stallService.add(stall);
@@ -50,7 +50,7 @@ public class StallController {
 
     @RequireRole({UserRole.ADMIN})
     @DeleteMapping("/stalls")
-    public Result<Stall> delete(@RequestParam List<Integer> ids)
+    public Result<?> delete(@RequestParam List<Integer> ids)
     {
         log.info("删除小摊，名字列表是{}",ids);
         stallService.delete(ids);
@@ -59,7 +59,7 @@ public class StallController {
 
     @RequireRole({UserRole.ADMIN})
     @PutMapping("/stalls/{id}")
-    public  Result<Stall> update(@PathVariable @Positive(message = "id必须大于0") Integer id,@RequestBody Stall stall)
+    public  Result<?> update(@PathVariable @Positive(message = "id必须大于0") Integer id,@RequestBody Stall stall)
     {
         if(!Objects.equals(id, stall.getId()) && stall.getId()!= null)
         {

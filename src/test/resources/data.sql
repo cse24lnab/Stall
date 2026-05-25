@@ -9,3 +9,10 @@ INSERT INTO dish (id, stall_id, name, price, is_sold_out) VALUES
     (1, 1, '招牌烤冷面', 12.50, 0),
     (2, 1, '豪华烤冷面', 15.00, 1),
     (3, 2, '鸡蛋煎饼', 8.00, 0);
+
+INSERT INTO `user`
+(`username`, `password_hash`, `nickname`, `role`)
+VALUES
+    ('user_demo', '$2b$10$s6flCBjbZplCftbcZu3GVOfaFI.PipuuaRQkyQOwOZHG2DTkg1Hgy', '普通用户演示账号',  0 ),
+    ('merchant_demo', '$2b$10$s6flCBjbZplCftbcZu3GVOfaFI.PipuuaRQkyQOwOZHG2DTkg1Hgy', '商家演示账号' ,1),
+    ('admin_demo', '$2b$10$s6flCBjbZplCftbcZu3GVOfaFI.PipuuaRQkyQOwOZHG2DTkg1Hgy', '管理员演示账号',  2 );

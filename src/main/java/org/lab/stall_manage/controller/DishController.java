@@ -42,7 +42,7 @@ public class DishController {
     @RequireRole({UserRole.ADMIN,UserRole.MERCHANT})
     @PostMapping("/dishes")
     //@Valid只可以用于json参数
-    public Result<Dish> add(@RequestBody @Valid Dish dish)
+    public Result<?> add(@RequestBody @Valid Dish dish)
     {
         log.info("增加名字为{}的菜品",dish.getName());
         //检查摊位是否存在
@@ -52,7 +52,7 @@ public class DishController {
 
     @RequireRole({UserRole.ADMIN,UserRole.MERCHANT})
     @DeleteMapping("/dishes")
-    public Result<Dish> delete(@RequestParam List<Integer> ids)
+    public Result<?> delete(@RequestParam List<Integer> ids)
     {
         log.info("删除id为{}的菜品",ids);
         dishService.deleteById(ids);
@@ -61,7 +61,7 @@ public class DishController {
 
     @RequireRole({UserRole.ADMIN,UserRole.MERCHANT})
     @PutMapping("/dishes/{id}")
-    public Result<Dish> update(@PathVariable @Positive(message = "id必须大于0") Integer id,@RequestBody Dish dish)
+    public Result<?> update(@PathVariable @Positive(message = "id必须大于0") Integer id,@RequestBody Dish dish)
     {
         log.info("修改id为{}的菜品，信息为{}",id,dish);
         if(!Objects.equals(id, dish.getId()) && dish.getId() != null)

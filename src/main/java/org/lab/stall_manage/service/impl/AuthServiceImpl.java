@@ -1,11 +1,8 @@
 package org.lab.stall_manage.service.impl;
 
 import org.lab.stall_manage.config.JwtProperties;
-import org.lab.stall_manage.context.BaseContext;
-import org.lab.stall_manage.context.CurrentUser;
 import org.lab.stall_manage.dto.LoginRequest;
 import org.lab.stall_manage.dto.RegisterRequest;
-import org.lab.stall_manage.exception.ForbiddenException;
 import org.lab.stall_manage.exception.UserNotExistException;
 import org.lab.stall_manage.mapper.UserMapper;
 import org.lab.stall_manage.pojo.User;
@@ -13,14 +10,13 @@ import org.lab.stall_manage.service.AuthService;
 import org.lab.stall_manage.utils.JwtToken;
 import org.lab.stall_manage.vo.AuthResponse;
 import org.lab.stall_manage.vo.LoginResponse;
-import org.lab.stall_manage.vo.MeResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -37,7 +33,7 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse register(RegisterRequest registerRequest)
     {
         //defend
-        if(!checkRegister(registerRequest))
+        if(!hasRequiredRegisterFields(registerRequest))
         {
             throw new IllegalArgumentException("参数不合法");
         }
@@ -69,35 +65,11 @@ public class AuthServiceImpl implements AuthService {
         throw new RuntimeException("账号或者密码错误");
     }
 
-    @Override
-    public Optional<MeResponse> findMe() {
-        CurrentUser currentUser = BaseContext.getCurrentUser();
-        //防御性编程
-        if(currentUser == null || currentUser.getId() == null)
-        {
-            throw new RuntimeException("登录过期");
-        }
-        Integer id=currentUser.getId();
-        User user = userMapper.find(id);
-        if(user == null)
-        {
-            return Optional.empty();
-        }
-        MeResponse meResponse=new MeResponse(
-                user.getId(),user.getUsername(),user.getNickname(),user.getPhone(),
-                user.getAvatarFileId(),user.getAvatarUrl(),user.getRole(),user.getStatus().name(),
-                user.getCreateTime(),user.getUpdateTime());
-        return Optional.of(meResponse);
-    }
-
-    private boolean checkRegister(RegisterRequest registerRequest) {
-        if (registerRequest == null) {
-            return false;
-        }
-        if (registerRequest.getUsername() == null || registerRequest.getUsername().isBlank()) {
-            return false;
-        }
-        return registerRequest.getPassword() != null && !registerRequest.getPassword().isBlank();
+    //pwd和username不能为空
+    private boolean hasRequiredRegisterFields (RegisterRequest registerRequest) {
+        return registerRequest != null &&
+                StringUtils.hasText(registerRequest.getPassword()) &&
+                StringUtils.hasText(registerRequest.getUsername());
     }
 
     private LoginResponse getLoginResponse(User user)

@@ -21,8 +21,4 @@ public interface AuthService {
      */
     LoginResponse login(LoginRequest loginRequest);
 
-    /**
-     * 用户查看自身信息
-     */
-    Optional<MeResponse> findMe();
 }

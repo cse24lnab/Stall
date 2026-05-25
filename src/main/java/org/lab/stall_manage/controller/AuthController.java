@@ -32,9 +32,5 @@ public class AuthController {
          return Result.success(authService.login(loginRequest));
     }
 
-    @GetMapping("/auth/me")
-    public Result<MeResponse> findMe()
-    {
-        return Result.success(authService.findMe().orElse(null));
-    }
+
 }

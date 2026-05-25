@@ -246,7 +246,7 @@ Authorization: Bearer <access_token>
 | --- | --- | --- | --- | --- |
 | 认证 | `POST` | `/auth/register` | 普通用户注册 | 规划接口 |
 | 认证 | `POST` | `/auth/login` | 登录并获取 JWT | 规划接口 |
-| 认证 | `GET` | `/auth/me` | 获取当前登录用户 | 规划接口 |
+| 用户 | `GET` | `/users/me` | 获取当前用户资料 | 规划接口 |
 | 用户 | `PUT` | `/users/me` | 修改个人资料 | 规划接口 |
 | 用户 | `PUT` | `/users/me/password` | 修改密码 | 规划接口 |
 | 商家申请 | `POST` | `/merchant-applications` | 提交商家申请 | 规划接口 |
@@ -385,10 +385,13 @@ Authorization: Bearer <access_token>
 }
 ```
 
-## 6.3 `GET /auth/me`
+## 7. 用户接口
 
-- 用途：获取当前登录用户信息
+## 7.1 `GET /users/me`
+
+- 用途：获取当前用户资料，用于个人中心展示或编辑资料前的查询回显
 - 权限：已登录用户
+- 说明：当前代码中已有的 `GET /auth/me` 可作为过渡兼容接口；后续规范接口建议统一使用 `GET /users/me`
 
 成功响应：
 
@@ -411,9 +414,7 @@ Authorization: Bearer <access_token>
 }
 ```
 
-## 7. 用户接口
-
-## 7.1 `PUT /users/me`
+## 7.2 `PUT /users/me`
 
 - 用途：修改个人资料
 - 权限：已登录用户
@@ -436,7 +437,7 @@ Authorization: Bearer <access_token>
 }
 ```
 
-## 7.2 `PUT /users/me/password`
+## 7.3 `PUT /users/me/password`
 
 - 用途：修改密码
 - 权限：已登录用户
@@ -1130,6 +1131,9 @@ Authorization: Bearer <access_token>
 
 当前项目中已经存在以下实际接口：
 
+- `POST /auth/register`
+- `POST /auth/login`
+- `GET /auth/me`
 - `GET /stalls`
 - `POST /stalls`
 - `GET /dishes`
@@ -1140,9 +1144,10 @@ Authorization: Bearer <access_token>
 - 当前 Controller 路径尚未统一加 `/api/v1`
 - 当前列表接口返回的是数组，不是分页对象
 - 当前 `stall` 和 `dish` 只实现了查和增，尚未实现改和删
-- 当前没有登录、文件上传、购物车、订单相关代码
+- 当前 `auth/me` 仍是现有兼容接口，规范化文档建议后续统一迁移到 `GET /users/me`
+- 当前仍没有文件上传、购物车、订单相关代码
 - 商家申请 / 审批接口属于规划新增，当前代码尚未实现
-- 当前 `User`、`Order` 仍为空实体，需要按本文档补齐
+- 当前 `Order` 仍为空实体，用户资料修改、密码修改接口尚未实现
 
 ## 15. 端到端业务流程示例
 

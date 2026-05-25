@@ -87,11 +87,7 @@ public class StallServiceImpl implements StallService {
         {
             throw new IllegalArgumentException("id不能为null");
         }
-        Stall findStall=this.findById(stall.getId()).orElse(null);
-        //同add，摊位可能不存在
-        if(findStall == null)
-        {
-            throw new StallNotExistException("摊位不存在");
-        }
+        //同add,摊位可能不存在
+        this.findById(stall.getId()).orElseThrow(()-> new StallNotExistException("摊位不存在"));
     }
 }

@@ -98,11 +98,7 @@ public class DishServiceImpl implements DishService {
         {
             throw new IllegalArgumentException("stallId不可修改");
         }
-        Dish findDish=this.findById(dish.getId()).orElse(null);
-        //同add,dish首先要存在
-        if(findDish == null)
-        {
-            throw new DishNotExistException("菜品不存在");
-        }
+        //同add,摊位可能不存在
+        this.findById(dish.getId()).orElseThrow(()-> new DishNotExistException("菜品不存在"));
     }
 }
