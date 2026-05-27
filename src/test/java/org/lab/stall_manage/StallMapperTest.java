@@ -76,4 +76,61 @@ public class StallMapperTest {
         assertEquals(stall.getId(), inserted.get(0).getId());
         assertEquals(1, inserted.get(0).getCurrentStatus());
     }
+
+    @Test
+    void deleteOneStall()
+    {
+        stallMapper.delete(List.of(1));
+        List<Stall> existStall=stallMapper.find(new Stall());
+        //把菜品删除是在service层用事务管理
+        assertEquals(1, existStall.size());
+        assertEquals(0,existStall.get(0).getIsDelete());
+    }
+
+    @Test
+    void deleteMultiStall()
+    {
+        stallMapper.delete(List.of(1,2));
+        List<Stall> existStall=stallMapper.find(new Stall());
+        assertEquals(0, existStall.size());
+    }
+
+    @Test
+    void updateExistStallNameAndNullNoonLocation()
+    {
+        Stall stall=new Stall();
+        stall.setId(1);
+        stall.setName("测试更新");
+        stall.setNoonLocation("");
+        stallMapper.update(stall);
+        List<Stall> updateStall=stallMapper.find(stall);
+        assertEquals("测试更新",updateStall.get(0).getName());
+        assertEquals("东区",updateStall.get(0).getNoonLocation());
+        assertEquals(0,updateStall.get(0).getIsDelete());
+    }
+
+    @Test
+    void updateExistStallNoonLocationAndNullName()
+    {
+        Stall stall=new Stall();
+        stall.setId(1);
+        stall.setName("");
+        stall.setNoonLocation("测试更新");
+        stallMapper.update(stall);
+        List<Stall> updateStall=stallMapper.find(stall);
+        assertEquals("测试更新",updateStall.get(0).getNoonLocation());
+        assertEquals("烤冷面",updateStall.get(0).getName());
+        assertEquals(0,updateStall.get(0).getIsDelete());
+    }
+
+    @Test
+    void updateNotExistStallNoChange()
+    {
+        stallMapper.delete(List.of(1));
+        Stall stall=new Stall();
+        stall.setId(1);
+        stall.setNoonLocation("测试更新");
+        int hasUpdate=stallMapper.update(stall);
+        assertEquals(0,hasUpdate);
+    }
 }

@@ -93,4 +93,90 @@ public class DishMapperTest {
         assertEquals(dish.getId(), inserted.get(0).getId());
         assertEquals(1, inserted.get(0).getIsSoldOut());
     }
+
+    //todo 删除和修改
+    @Test
+    void deleteByOneExistDishId()
+    {
+        int deletedDish = dishMapper.deleteById(List.of(1));
+        List<Dish> dishes = dishMapper.find(new Dish());
+        assertEquals(2,dishes.size());
+        assertEquals(1,deletedDish);
+        assertEquals("豪华烤冷面",dishes.get(0).getName());
+    }
+
+    @Test
+    void deleteByOneExistDishStallId()
+    {
+        int deletedDish = dishMapper.deleteByStallId(List.of(1));
+        List<Dish> dishes = dishMapper.find(new Dish());
+        assertEquals(1,dishes.size());
+        assertEquals(2,deletedDish);
+        assertEquals("鸡蛋煎饼",dishes.get(0).getName());
+    }
+
+    @Test
+    void deleteByMultiExistDishId()
+    {
+        int deletedDish = dishMapper.deleteById(List.of(1,2));
+        List<Dish> dishes = dishMapper.find(new Dish());
+        assertEquals(1,dishes.size());
+        assertEquals(2,deletedDish);
+        assertEquals("鸡蛋煎饼",dishes.get(0).getName());
+    }
+
+    @Test
+    void deleteByMultiExistDishStallId()
+    {
+        int deletedDish = dishMapper.deleteByStallId(List.of(1,2));
+        List<Dish> dishes = dishMapper.find(new Dish());
+        assertEquals(0,dishes.size());
+        assertEquals(3,deletedDish);
+    }
+
+    /*
+      1.updateSoldOutAndNullName
+      2.updateNameAndPrice
+      3.updateNotExistDish
+     */
+    @Test
+    void updateSoldOutAndNullName()
+    {
+        Dish dish=new Dish();
+        dish.setIsSoldOut(1);
+        dish.setName("");
+        dish.setId(1);
+        int update = dishMapper.update(dish);
+        List<Dish> dishes = dishMapper.find(dish);
+        assertEquals(1,update);
+        assertEquals("招牌烤冷面",dishes.get(0).getName());
+        assertEquals(1,dishes.get(0).getIsSoldOut());
+    }
+
+    @Test
+    void updateNameAndPrice()
+    {
+        Dish dish=new Dish();
+        dish.setName("测试");
+        dish.setPrice(new BigDecimal("100.0"));
+        dish.setId(1);
+        int update = dishMapper.update(dish);
+        List<Dish> dishes = dishMapper.find(dish);
+        assertEquals(1,update);
+        assertEquals("测试",dishes.get(0).getName());
+        assertEquals(0, dishes.get(0).getPrice().compareTo(BigDecimal.valueOf(100.0)));
+    }
+
+    @Test
+    void updateNotExistDish()
+    {
+        dishMapper.deleteById(List.of(1));
+        Dish dish=new Dish();
+        dish.setName("测试");
+        dish.setPrice(new BigDecimal("100.0"));
+        dish.setId(1);
+        int update = dishMapper.update(dish);
+        List<Dish> dishes = dishMapper.find(dish);
+        assertEquals(0,update);
+    }
 }

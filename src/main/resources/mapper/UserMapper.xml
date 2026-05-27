@@ -26,9 +26,9 @@
         WHERE `id`=#{id} AND `is_delete`=0
     </update>
     <select id="findByUsername" resultType="org.lab.stall_manage.pojo.User">
-        SELECT * FROM user WHERE username=#{username}
+        SELECT * FROM `user` WHERE username=#{username} AND is_delete=0
     </select>
     <select id="find" resultType="org.lab.stall_manage.pojo.User">
-        SELECT * FROM user WHERE id=#{id} AND is_delete=0
+        SELECT * FROM `user` WHERE id=#{id} AND is_delete=0
     </select>
 </mapper>

@@ -10,15 +10,15 @@ public interface DishMapper {
     //todo 名字模糊查询
     List<Dish> find(Dish dish);
 
-    void add(Dish dish);
+    int add(Dish dish);
 
-    void deleteById(List<Integer> ids);
+    int deleteById(List<Integer> ids);
 
     /**
      * 目前是用来给stall的删除操作使用，同一事务
      * @see StallService
      */
-    void deleteByStallId(List<Integer> stallIds);
+    int deleteByStallId(List<Integer> stallIds);
 
-    void update(Dish dish);
+    int update(Dish dish);
 }
