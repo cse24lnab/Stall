@@ -11,16 +11,22 @@ public interface UserService {
 
     /**
      * 更新个人信息
+     * @throws IllegalArgumentException 参数不能为空
+     * @throws RuntimeException 登录过期
      */
-    public void updateMe(UpdateMeRequest updateMeRequest);
+    void updateMe(UpdateMeRequest updateMeRequest);
 
     /**
      * 修改密码
+     * @throws IllegalArgumentException 参数不能为空
+     * @throws org.lab.stall_manage.exception.UserNotExistException 用户不存在
+     * @throws RuntimeException 密码错误 登录过期
      */
-    public void changePassword(ChangePasswordRequest changePasswordRequest);
+    void changePassword(ChangePasswordRequest changePasswordRequest);
 
     /**
      * 用户查看自身信息
+     * @throws RuntimeException 登录过期
      */
-    public Optional<MeResponse> findMe();
+    Optional<MeResponse> findMe();
 }

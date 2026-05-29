@@ -1,5 +1,8 @@
 package org.lab.stall_manage.service.impl;
 
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import org.lab.stall_manage.exception.DishNotExistException;
 import org.lab.stall_manage.exception.StallNotExistException;
 import org.lab.stall_manage.mapper.DishMapper;
@@ -7,6 +10,7 @@ import org.lab.stall_manage.mapper.StallMapper;
 import org.lab.stall_manage.pojo.Dish;
 import org.lab.stall_manage.pojo.Stall;
 import org.lab.stall_manage.service.DishService;
+import org.lab.stall_manage.vo.PageVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,13 +28,15 @@ public class DishServiceImpl implements DishService {
     private StallMapper stallMapper;
 
     @Override
-    public List<Dish> find(Dish dish) {
+    public PageVO<Dish> find(int page,int pageSize,Dish dish) {
+        PageHelper.startPage(page,pageSize);
         List<Dish> dishes = dishMapper.find(dish);
         //防御性编程，根据api规范不应该给前端返回null列表
-        if(dishes==null){
-            return Collections.emptyList();
+        if(dishes==null || dishes.isEmpty()){
+            return new PageVO<>(0,Collections.emptyList());
         }
-        return dishes;
+        PageInfo<Dish> pageInfo=new PageInfo<>(dishes);
+        return new PageVO<>(pageInfo.getTotal(),pageInfo.getList());
     }
 
     @Override

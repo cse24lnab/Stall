@@ -64,35 +64,43 @@ public class StallMapperTest {
         stall.setEveningStartTime(LocalTime.of(17, 30));
         stall.setEveningEndTime(LocalTime.of(21, 0));
 
-        stallMapper.add(stall);
+        int inserted = stallMapper.add(stall);
 
+        assertEquals(1, inserted);
         assertNotNull(stall.getId());
 
         Stall query = new Stall();
         query.setName("测试小摊");
-        List<Stall> inserted = stallMapper.find(query);
+        List<Stall> insertedStalls = stallMapper.find(query);
 
-        assertEquals(1, inserted.size());
-        assertEquals(stall.getId(), inserted.get(0).getId());
-        assertEquals(1, inserted.get(0).getCurrentStatus());
+        assertEquals(1, insertedStalls.size());
+        assertEquals(stall.getId(), insertedStalls.get(0).getId());
+        assertEquals(1, insertedStalls.get(0).getCurrentStatus());
     }
 
     @Test
     void deleteOneStall()
     {
-        stallMapper.delete(List.of(1));
-        List<Stall> existStall=stallMapper.find(new Stall());
-        //把菜品删除是在service层用事务管理
-        assertEquals(1, existStall.size());
-        assertEquals(0,existStall.get(0).getIsDelete());
+        int deleted = stallMapper.delete(List.of(1));
+
+        Stall deletedQuery = new Stall();
+        deletedQuery.setId(1);
+        Stall remainQuery = new Stall();
+        remainQuery.setId(2);
+
+        assertEquals(1, deleted);
+        assertEquals(0, stallMapper.find(deletedQuery).size());
+        assertEquals(1, stallMapper.find(remainQuery).size());
+        assertEquals("煎饼", stallMapper.find(remainQuery).get(0).getName());
     }
 
     @Test
     void deleteMultiStall()
     {
-        stallMapper.delete(List.of(1,2));
-        List<Stall> existStall=stallMapper.find(new Stall());
-        assertEquals(0, existStall.size());
+        int deleted = stallMapper.delete(List.of(1,2));
+
+        assertEquals(2, deleted);
+        assertEquals(0, stallMapper.find(new Stall()).size());
     }
 
     @Test
@@ -102,8 +110,9 @@ public class StallMapperTest {
         stall.setId(1);
         stall.setName("测试更新");
         stall.setNoonLocation("");
-        stallMapper.update(stall);
+        int updated = stallMapper.update(stall);
         List<Stall> updateStall=stallMapper.find(stall);
+        assertEquals(1, updated);
         assertEquals("测试更新",updateStall.get(0).getName());
         assertEquals("东区",updateStall.get(0).getNoonLocation());
         assertEquals(0,updateStall.get(0).getIsDelete());
@@ -116,11 +125,33 @@ public class StallMapperTest {
         stall.setId(1);
         stall.setName("");
         stall.setNoonLocation("测试更新");
-        stallMapper.update(stall);
+        int updated = stallMapper.update(stall);
         List<Stall> updateStall=stallMapper.find(stall);
+        assertEquals(1, updated);
         assertEquals("测试更新",updateStall.get(0).getNoonLocation());
         assertEquals("烤冷面",updateStall.get(0).getName());
         assertEquals(0,updateStall.get(0).getIsDelete());
+    }
+
+    @Test
+    void updateCurrentStatusAndEveningEndTime()
+    {
+        Stall stall = new Stall();
+        stall.setId(1);
+        stall.setCurrentStatus(0);
+        stall.setEveningEndTime(LocalTime.of(22, 30));
+
+        int updated = stallMapper.update(stall);
+
+        Stall query = new Stall();
+        query.setId(1);
+        List<Stall> updatedStalls = stallMapper.find(query);
+
+        assertEquals(1, updated);
+        assertEquals(1, updatedStalls.size());
+        assertEquals(0, updatedStalls.get(0).getCurrentStatus());
+        assertEquals(LocalTime.of(22, 30), updatedStalls.get(0).getEveningEndTime());
+        assertEquals("烤冷面", updatedStalls.get(0).getName());
     }
 
     @Test

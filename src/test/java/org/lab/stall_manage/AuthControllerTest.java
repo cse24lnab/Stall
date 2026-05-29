@@ -102,6 +102,18 @@ class AuthControllerTest {
     }
 
     @Test
+    void registerRejectsShortPassword() throws Exception {
+        mockMvc.perform(post("/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"username":"alice01","password":"1234567","nickname":"Alice","phone":"13800000000"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.msg").value("密码长度不低于8位"));
+    }
+
+    @Test
     void loginRejectsMissingPassword() throws Exception {
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -111,6 +123,18 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.msg").value("密码不能为空"));
+    }
+
+    @Test
+    void loginRejectsShortPassword() throws Exception {
+        mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"username":"alice01","password":"1234567"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.msg").value("密码长度不低于8位"));
     }
 
     @Test

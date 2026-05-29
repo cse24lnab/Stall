@@ -1,10 +1,14 @@
 package org.lab.stall_manage.service.impl;
 
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import org.lab.stall_manage.exception.StallNotExistException;
 import org.lab.stall_manage.mapper.DishMapper;
 import org.lab.stall_manage.mapper.StallMapper;
 import org.lab.stall_manage.pojo.Stall;
 import org.lab.stall_manage.service.StallService;
+import org.lab.stall_manage.vo.PageVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,11 +27,17 @@ public class StallServiceImpl implements StallService {
     private DishMapper dishMapper;
 
     @Override
-    public List<Stall> find(Stall stall) {
+    public PageVO<Stall> find(int page,int pageSize ,Stall stall) {
+        PageHelper.startPage(page,pageSize);
         //如果stall表没有stall可能返回null
         List<Stall>stalls = stallMapper.find(stall);
         //防御型编程不返回null
-        return Objects.requireNonNullElse(stalls, Collections.emptyList());
+        if(stalls == null || stalls.isEmpty())
+        {
+            return new PageVO<>(0,Collections.emptyList());
+        }
+        PageInfo<Stall> pageInfo=new PageInfo<>(stalls);
+        return new PageVO<>(pageInfo.getTotal(),pageInfo.getList());
     }
 
     @Override
@@ -81,11 +91,11 @@ public class StallServiceImpl implements StallService {
     {
         if(stall == null)
         {
-            throw new IllegalArgumentException("摊位不能为null");
+            throw new IllegalArgumentException("摊位不能为空");
         }
         if(stall.getId() == null)
         {
-            throw new IllegalArgumentException("id不能为null");
+            throw new IllegalArgumentException("id不能为空");
         }
         //同add,摊位可能不存在
         this.findById(stall.getId()).orElseThrow(()-> new StallNotExistException("摊位不存在"));

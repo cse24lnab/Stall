@@ -56,7 +56,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void changePassword(ChangePasswordRequest changePasswordRequest) {
-        if(changePasswordRequest == null)
+        //不再校验密码长度
+        if(isBlank(changePasswordRequest))
         {
             throw new IllegalArgumentException("参数不能为空");
         }
@@ -66,6 +67,9 @@ public class UserServiceImpl implements UserService {
         {
             throw new UserNotExistException("用户不存在");
         }
+        if (!StringUtils.hasText(user.getPasswordHash())) {
+            throw new RuntimeException("用户数据异常，无法修改密码");
+        }
         boolean matches = passwordEncoder.matches(changePasswordRequest.getOldPassword(), user.getPasswordHash());
         if(!matches)
         {
@@ -73,9 +77,9 @@ public class UserServiceImpl implements UserService {
         }
         String newPassword=passwordEncoder.encode(changePasswordRequest.getNewPassword());
         User newUser=new User();
-        newUser.setId(user.getId());
+        newUser.setId(id);
         newUser.setPasswordHash(newPassword);
-        userMapper.update(user);
+        userMapper.update(newUser);
     }
 
     private Integer getCurrentId()
@@ -97,5 +101,10 @@ public class UserServiceImpl implements UserService {
                 updateMeRequest.getAvatarFileId() != null;
     }
 
+    private boolean isBlank(ChangePasswordRequest changePasswordRequest)
+    {
+        return changePasswordRequest == null || !StringUtils.hasText(changePasswordRequest.getOldPassword())
+                || !StringUtils.hasText(changePasswordRequest.getNewPassword());
+    }
 
 }
