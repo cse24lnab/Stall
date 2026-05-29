@@ -8,6 +8,7 @@ import org.lab.stall_manage.pojo.Result;
 import org.lab.stall_manage.pojo.Stall;
 import org.lab.stall_manage.pojo.enums.UserRole;
 import org.lab.stall_manage.service.StallService;
+import org.lab.stall_manage.vo.PageVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -24,10 +25,13 @@ public class StallController {
     private StallService stallService;
 
     @GetMapping("/stalls")
-    public Result<List<Stall>> find(Stall stall)
+    public Result<PageVO<Stall>> find(
+            Stall stall,
+            @RequestParam(defaultValue = "1") @Positive(message = "page must be greater than 0") int page,
+            @RequestParam(defaultValue = "10") @Positive(message = "pageSize must be greater than 0") int pageSize)
     {
         log.info("查询小摊，条件为{}",stall);
-        List<Stall> result=stallService.find(stall);
+        PageVO<Stall> result=stallService.find(page,pageSize,stall);
         return Result.success(result);
     }
 

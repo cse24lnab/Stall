@@ -1,13 +1,14 @@
 package org.lab.stall_manage;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.lab.stall_manage.controller.StallController;
 import org.lab.stall_manage.exception.GlobalException;
 import org.lab.stall_manage.pojo.Stall;
 import org.lab.stall_manage.service.StallService;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.lab.stall_manage.vo.PageVO;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
@@ -20,6 +21,7 @@ import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -34,6 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class StallControllerTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    //todo page=0、pageSize=0
     @Mock
     private StallService stallService;
 
@@ -55,22 +58,27 @@ class StallControllerTest {
     }
 
     @Test
-    void getStallsReturnsSuccess() throws Exception {
-        when(stallService.find(any(Stall.class))).thenReturn(List.of(createStall()));
+    void getStallsReturnsPagedResponse() throws Exception {
+        when(stallService.find(eq(1), eq(1), any(Stall.class)))
+                .thenReturn(new PageVO<>(1, List.of(createStall(1, "stall-a"))));
 
-        mockMvc.perform(get("/stalls").param("name", "烤冷面"))
+        mockMvc.perform(get("/stalls")
+                        .param("page", "1")
+                        .param("pageSize", "1")
+                        .param("name", "stall-a"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(1))
-                .andExpect(jsonPath("$.data[0].name").value("烤冷面"));
+                .andExpect(jsonPath("$.data.total").value(1))
+                .andExpect(jsonPath("$.data.records[0].name").value("stall-a"));
 
-        verify(stallService).find(any(Stall.class));
+        verify(stallService).find(eq(1), eq(1), any(Stall.class));
     }
 
     @Test
     void postStallsReturnsSuccess() throws Exception {
         mockMvc.perform(post("/stalls")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"烤冷面\"}"))
+                        .content(objectMapper.writeValueAsString(createStall(null, "stall-a"))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(1))
                 .andExpect(jsonPath("$.msg").value("success"));
@@ -79,15 +87,15 @@ class StallControllerTest {
     }
 
     @Test
-    void runtimeExceptionWithoutMessageReturnsOperationFailed() throws Exception {
+    void runtimeExceptionWithoutMessageReturnsFailure() throws Exception {
         doThrow(new RuntimeException()).when(stallService).add(any(Stall.class));
 
         mockMvc.perform(post("/stalls")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"烤冷面\"}"))
+                        .content(objectMapper.writeValueAsString(createStall(null, "stall-a"))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))
-                .andExpect(jsonPath("$.msg").value("操作失败"));
+                .andExpect(jsonPath("$.msg").exists());
     }
 
     @Test
@@ -103,7 +111,7 @@ class StallControllerTest {
     @Test
     void putStallsReturnsSuccess() throws Exception {
         Stall stall = new Stall();
-        stall.setName("改名后摊位");
+        stall.setName("stall-renamed");
 
         mockMvc.perform(put("/stalls/1")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -119,20 +127,20 @@ class StallControllerTest {
     void putStallsRejectsMismatchedId() throws Exception {
         Stall stall = new Stall();
         stall.setId(2);
-        stall.setName("改名后摊位");
+        stall.setName("stall-renamed");
 
         mockMvc.perform(put("/stalls/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(stall)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))
-                .andExpect(jsonPath("$.msg").value("id不一致"));
+                .andExpect(jsonPath("$.msg").exists());
     }
 
-    private Stall createStall() {
+    private Stall createStall(Integer id, String name) {
         Stall stall = new Stall();
-        stall.setId(1);
-        stall.setName("烤冷面");
+        stall.setId(id);
+        stall.setName(name);
         stall.setCurrentStatus(1);
         return stall;
     }

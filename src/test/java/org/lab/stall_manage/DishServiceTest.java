@@ -1,5 +1,7 @@
 package org.lab.stall_manage;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.lab.stall_manage.exception.DishNotExistException;
 import org.lab.stall_manage.exception.StallNotExistException;
 import org.lab.stall_manage.mapper.DishMapper;
@@ -7,8 +9,7 @@ import org.lab.stall_manage.mapper.StallMapper;
 import org.lab.stall_manage.pojo.Dish;
 import org.lab.stall_manage.pojo.Stall;
 import org.lab.stall_manage.service.impl.DishServiceImpl;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.lab.stall_manage.vo.PageVO;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -20,14 +21,14 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class DishServiceTest {
+class DishServiceTest {
     @Mock
     private DishMapper dishMapper;
 
@@ -38,31 +39,47 @@ public class DishServiceTest {
     private DishServiceImpl dishService;
 
     @Test
-    void findReturnsEmptyListWhenMapperReturnsNullForEmptyQuery() {
+    void findReturnsEmptyPageWhenMapperReturnsNull() {
         Dish query = new Dish();
         when(dishMapper.find(query)).thenReturn(null);
 
-        List<Dish> result = dishService.find(query);
+        PageVO<Dish> result = dishService.find(1, 10, query);
 
-        assertTrue(result.isEmpty());
+        assertEquals(0, result.getTotal());
+        assertTrue(result.getRecords().isEmpty());
         verify(dishMapper).find(query);
     }
 
     @Test
-    void findReturnsEmptyListWhenMapperReturnsNull() {
+    void findReturnsEmptyPageWhenMapperReturnsEmptyList() {
         Dish query = new Dish();
-        query.setStallId(1);
-        when(dishMapper.find(query)).thenReturn(null);
+        when(dishMapper.find(query)).thenReturn(Collections.emptyList());
 
-        List<Dish> result = dishService.find(query);
+        PageVO<Dish> result = dishService.find(1, 10, query);
 
-        assertTrue(result.isEmpty());
+        assertEquals(0, result.getTotal());
+        assertTrue(result.getRecords().isEmpty());
+        verify(dishMapper).find(query);
+    }
+
+    @Test
+    void findReturnsPageWhenMapperReturnsRows() {
+        Dish query = new Dish();
+        when(dishMapper.find(query)).thenReturn(List.of(
+                createDish("dish-a", "12.50"),
+                createDish("dish-b", "15.00")));
+
+        PageVO<Dish> result = dishService.find(1, 10, query);
+
+        assertEquals(2, result.getTotal());
+        assertEquals(2, result.getRecords().size());
+        assertEquals("dish-a", result.getRecords().get(0).getName());
         verify(dishMapper).find(query);
     }
 
     @Test
     void addThrowsWhenStallDoesNotExist() {
-        Dish dish = createDish();
+        Dish dish = createDish("dish-a", "12.50");
         when(stallMapper.find(any(Stall.class))).thenReturn(Collections.emptyList());
 
         assertThrows(StallNotExistException.class, () -> dishService.add(dish));
@@ -71,7 +88,7 @@ public class DishServiceTest {
 
     @Test
     void addDefaultsSoldOutToZeroWhenMissing() {
-        Dish dish = createDish();
+        Dish dish = createDish("dish-a", "12.50");
         dish.setIsSoldOut(null);
         when(stallMapper.find(any(Stall.class))).thenReturn(List.of(new Stall()));
 
@@ -83,7 +100,7 @@ public class DishServiceTest {
 
     @Test
     void addCallsMapperOnceWhenDishIsValid() {
-        Dish dish = createDish();
+        Dish dish = createDish("dish-a", "12.50");
         dish.setIsSoldOut(0);
         when(stallMapper.find(any(Stall.class))).thenReturn(List.of(new Stall()));
 
@@ -125,7 +142,7 @@ public class DishServiceTest {
     @Test
     void updateThrowsWhenIdIsNull() {
         Dish dish = new Dish();
-        dish.setName("招牌烤冷面");
+        dish.setName("dish-a");
 
         assertThrows(IllegalArgumentException.class, () -> dishService.update(dish));
         verify(dishMapper, never()).update(any(Dish.class));
@@ -155,19 +172,19 @@ public class DishServiceTest {
     void updateCallsMapperWhenDishIsValid() {
         Dish dish = new Dish();
         dish.setId(1);
-        dish.setName("改名后菜品");
-        when(dishMapper.find(any(Dish.class))).thenReturn(List.of(createDish()));
+        dish.setName("dish-renamed");
+        when(dishMapper.find(any(Dish.class))).thenReturn(List.of(createDish("dish-a", "12.50")));
 
         dishService.update(dish);
 
         verify(dishMapper).update(dish);
     }
 
-    private Dish createDish() {
+    private Dish createDish(String name, String price) {
         Dish dish = new Dish();
         dish.setStallId(1);
-        dish.setName("招牌烤冷面");
-        dish.setPrice(new BigDecimal("12.50"));
+        dish.setName(name);
+        dish.setPrice(new BigDecimal(price));
         return dish;
     }
 }

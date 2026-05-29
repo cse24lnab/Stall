@@ -20,6 +20,7 @@
                 AND  `id`=#{id}
             </if>
         </where>
+        ORDER BY `id` ASC
     </select>
     <insert id="add" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO `dish`(`stall_id`,`name`,`price`,`is_sold_out`)

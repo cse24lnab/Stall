@@ -8,6 +8,7 @@ import org.lab.stall_manage.pojo.Dish;
 import org.lab.stall_manage.pojo.Result;
 import org.lab.stall_manage.pojo.enums.UserRole;
 import org.lab.stall_manage.service.DishService;
+import org.lab.stall_manage.vo.PageVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -24,10 +25,13 @@ public class DishController {
     private DishService dishService;
 
     @GetMapping("/dishes")
-    public Result<List<Dish>> find(Dish dish)
+    public Result<PageVO<Dish>> find(
+            Dish dish,
+            @RequestParam(defaultValue = "1") @Positive(message = "page must be greater than 0") int page,
+            @RequestParam(defaultValue = "10") @Positive(message = "pageSize must be greater than 0") int pageSize)
     {
         log.info("查询菜品，条件为{}",dish);
-        List<Dish>result = dishService.find(dish);
+        PageVO<Dish>result = dishService.find(page,pageSize,dish);
         return Result.success(result);
     }
 
