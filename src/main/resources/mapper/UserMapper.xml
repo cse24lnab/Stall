@@ -22,6 +22,9 @@
             <if test="avatarFileId !=null">
                 `avatar_file_id`=#{avatarFileId},
             </if>
+            <if test="avatarUrl != null and avatarUrl !=''">
+                `avatar_url`=#{avatarUrl},
+            </if>
         </set>
         WHERE `id`=#{id} AND `is_delete`=0
     </update>

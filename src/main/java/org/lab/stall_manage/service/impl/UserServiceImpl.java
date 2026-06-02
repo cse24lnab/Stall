@@ -8,11 +8,13 @@ import org.lab.stall_manage.exception.UserNotExistException;
 import org.lab.stall_manage.mapper.UserMapper;
 import org.lab.stall_manage.pojo.User;
 import org.lab.stall_manage.service.UserService;
+import org.lab.stall_manage.utils.AliyunOssUtil;
 import org.lab.stall_manage.vo.MeResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Optional;
 
@@ -23,6 +25,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private AliyunOssUtil aliyunOssUtil;
 
     @Override
     public Optional<MeResponse> findMe() {
@@ -80,6 +85,25 @@ public class UserServiceImpl implements UserService {
         newUser.setId(id);
         newUser.setPasswordHash(newPassword);
         userMapper.update(newUser);
+    }
+
+    @Override
+    public void upLoadAvatar(MultipartFile file) {
+        //defend
+        if(file == null || file.isEmpty())
+        {
+            throw new IllegalArgumentException("文件不能为空");
+        }
+        try {
+            String uploadUrl = aliyunOssUtil.upload(file);
+            Integer id=getCurrentId();
+            User user=new User();
+            user.setId(id);
+            user.setAvatarUrl(uploadUrl);
+            userMapper.update(user);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private Integer getCurrentId()
