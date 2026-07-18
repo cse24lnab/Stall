@@ -8,28 +8,38 @@ import org.lab.stall_manage.context.BaseContext;
 import org.lab.stall_manage.context.CurrentUser;
 import org.lab.stall_manage.dto.ChangePasswordRequest;
 import org.lab.stall_manage.dto.UpdateMeRequest;
+import org.lab.stall_manage.exception.FileUploadException;
 import org.lab.stall_manage.exception.UserNotExistException;
 import org.lab.stall_manage.mapper.UserMapper;
 import org.lab.stall_manage.pojo.User;
 import org.lab.stall_manage.pojo.enums.Status;
 import org.lab.stall_manage.pojo.enums.UserRole;
 import org.lab.stall_manage.service.impl.UserServiceImpl;
+import org.lab.stall_manage.utils.AliyunOssUtil;
+import org.lab.stall_manage.vo.FileResponse;
 import org.lab.stall_manage.vo.MeResponse;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -40,6 +50,9 @@ public class UserServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private AliyunOssUtil aliyunOssUtil;
 
     @InjectMocks
     //必须是实体类
@@ -243,6 +256,102 @@ public class UserServiceTest {
         User updatedUser = captor.getValue();
         assertEquals(1, updatedUser.getId());
         assertEquals("encoded-new-password", updatedUser.getPasswordHash());
+    }
+
+    @Test
+    void uploadAvatarRejectsNullFile()
+    {
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class, () -> userService.upLoadAvatar(null));
+
+        assertEquals("文件不能为空", ex.getMessage());
+        verifyNoInteractions(aliyunOssUtil);
+        verify(userMapper, never()).update(any(User.class));
+    }
+
+    @Test
+    void uploadAvatarRejectsEmptyFile()
+    {
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "avatar.png", MediaType.IMAGE_PNG_VALUE, new byte[0]);
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class, () -> userService.upLoadAvatar(file));
+
+        assertEquals("文件不能为空", ex.getMessage());
+        verifyNoInteractions(aliyunOssUtil);
+        verify(userMapper, never()).update(any(User.class));
+    }
+
+    @Test
+    void uploadAvatarChecksLoginBeforeUploading()
+    {
+        BaseContext.RemoveCurrentUser();
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "avatar.png", MediaType.IMAGE_PNG_VALUE, "image-content".getBytes());
+
+        RuntimeException ex = assertThrows(
+                RuntimeException.class, () -> userService.upLoadAvatar(file));
+
+        assertEquals("登录过期", ex.getMessage());
+        verifyNoInteractions(aliyunOssUtil);
+        verify(userMapper, never()).update(any(User.class));
+    }
+
+    @Test
+    void uploadAvatarSuccess() throws Exception
+    {
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "avatar.png", MediaType.IMAGE_PNG_VALUE, "image-content".getBytes());
+        String url = "https://example.com/avatar.png";
+        when(aliyunOssUtil.upload(file)).thenReturn(url);
+
+        FileResponse response = userService.upLoadAvatar(file);
+
+        assertNull(response.getFileId());
+        assertEquals(url, response.getUrl());
+        assertEquals("avatar.png", response.getFileName());
+        assertEquals(MediaType.IMAGE_PNG_VALUE, response.getContentType());
+        assertEquals(file.getSize(), response.getSize());
+        assertEquals(1, response.getUploadedBy());
+        assertNotNull(response.getCreateTime());
+        verify(aliyunOssUtil).upload(file);
+
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userMapper).update(captor.capture());
+        User updatedUser = captor.getValue();
+        assertEquals(1, updatedUser.getId());
+        assertEquals(url, updatedUser.getAvatarUrl());
+    }
+
+    @Test
+    void uploadAvatarPreservesRuntimeException() throws Exception
+    {
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "avatar.png", MediaType.IMAGE_PNG_VALUE, "image-content".getBytes());
+        IllegalArgumentException cause = new IllegalArgumentException("图片格式不合法");
+        when(aliyunOssUtil.upload(file)).thenThrow(cause);
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class, () -> userService.upLoadAvatar(file));
+
+        assertSame(cause, ex);
+        verify(userMapper, never()).update(any(User.class));
+    }
+
+    @Test
+    void uploadAvatarWrapsCheckedException() throws Exception
+    {
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "avatar.png", MediaType.IMAGE_PNG_VALUE, "image-content".getBytes());
+        when(aliyunOssUtil.upload(file)).thenThrow(new IOException("OSS不可用"));
+
+        FileUploadException ex = assertThrows(
+                FileUploadException.class, () -> userService.upLoadAvatar(file));
+
+        assertEquals("OSS不可用", ex.getMessage());
+        assertEquals(500, ex.getCode());
+        verify(userMapper, never()).update(any(User.class));
     }
 
     private User createUser()

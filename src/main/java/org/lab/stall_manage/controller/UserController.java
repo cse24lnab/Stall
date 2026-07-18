@@ -14,9 +14,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.awt.*;
-
-
 @Slf4j
 @RestController
 public class UserController {
@@ -49,7 +46,7 @@ public class UserController {
         String actualBizType= StringUtils.hasText(bizType)?bizType:"avatar";
         if(!actualBizType.equals("avatar"))
         {
-            throw new IllegalArgumentException("当前只支持文件上传");
+            throw new IllegalArgumentException("当前只支持头像上传");
         }
         FileResponse fileResponse = userService.upLoadAvatar(file);
         return Result.success(fileResponse);

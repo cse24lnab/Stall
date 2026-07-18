@@ -97,9 +97,13 @@ public class UserServiceImpl implements UserService {
         {
             throw new IllegalArgumentException("文件不能为空");
         }
+        Integer id=getCurrentId();
         try {
             String uploadUrl = aliyunOssUtil.upload(file);
-            Integer id=getCurrentId();
+            User user=new User();
+            user.setId(id);
+            user.setAvatarUrl(uploadUrl);
+            userMapper.update(user);
             //fileName相信aliyunOssUtil已经处理了异常
             //当前无file表，fileid返回null
             //todo stall 和 dish都要上传图片，到时会统一成file表

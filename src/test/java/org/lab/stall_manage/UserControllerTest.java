@@ -12,11 +12,13 @@ import org.lab.stall_manage.exception.GlobalException;
 import org.lab.stall_manage.exception.UserNotExistException;
 import org.lab.stall_manage.pojo.enums.UserRole;
 import org.lab.stall_manage.service.UserService;
+import org.lab.stall_manage.vo.FileResponse;
 import org.lab.stall_manage.vo.MeResponse;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -27,9 +29,11 @@ import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -251,6 +255,65 @@ public class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.msg").value("用户不存在"));
+    }
+
+    @Test
+    void uploadAvatarSuccess() throws Exception
+    {
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "avatar.png", MediaType.IMAGE_PNG_VALUE, "image-content".getBytes());
+        LocalDateTime createTime = LocalDateTime.of(2026, 7, 18, 15, 0);
+        FileResponse response = new FileResponse(
+                null, "https://example.com/avatar.png", "avatar.png",
+                MediaType.IMAGE_PNG_VALUE, file.getSize(), 1, createTime);
+        when(userService.upLoadAvatar(any())).thenReturn(response);
+
+        mockMvc.perform(multipart("/files")
+                        .file(file)
+                        .param("bizType", "avatar"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(1))
+                .andExpect(jsonPath("$.data.fileId").isEmpty())
+                .andExpect(jsonPath("$.data.url").value("https://example.com/avatar.png"))
+                .andExpect(jsonPath("$.data.fileName").value("avatar.png"))
+                .andExpect(jsonPath("$.data.contentType").value(MediaType.IMAGE_PNG_VALUE))
+                .andExpect(jsonPath("$.data.size").value(file.getSize()))
+                .andExpect(jsonPath("$.data.uploadedBy").value(1));
+
+        verify(userService).upLoadAvatar(any());
+    }
+
+    @Test
+    void uploadAvatarDefaultsBizTypeWhenMissing() throws Exception
+    {
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "avatar.jpg", MediaType.IMAGE_JPEG_VALUE, "image-content".getBytes());
+        when(userService.upLoadAvatar(any())).thenReturn(new FileResponse(
+                null, "https://example.com/avatar.jpg", "avatar.jpg",
+                MediaType.IMAGE_JPEG_VALUE, file.getSize(), 1, LocalDateTime.now()));
+
+        mockMvc.perform(multipart("/files").file(file))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(1))
+                .andExpect(jsonPath("$.data.url").value("https://example.com/avatar.jpg"));
+
+        verify(userService).upLoadAvatar(any());
+    }
+
+    @Test
+    void uploadAvatarRejectsUnsupportedBizType() throws Exception
+    {
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "dish.png", MediaType.IMAGE_PNG_VALUE, "image-content".getBytes());
+
+        mockMvc.perform(multipart("/files")
+                        .file(file)
+                        .param("bizType", "dish-image"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.msg").value("当前只支持头像上传"));
+
+        verify(userService, never()).upLoadAvatar(any());
     }
 
     private MeResponse createResponse()

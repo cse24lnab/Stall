@@ -109,6 +109,21 @@ public class UserMapperTest {
     }
 
     @Test
+    void updateAvatarUrlOnlyKeepsOtherFields() {
+        User user = new User();
+        user.setId(1);
+        user.setAvatarUrl("https://example.com/avatar.png");
+
+        int update = userMapper.update(user);
+        User updated = userMapper.find(1);
+
+        assertEquals(1, update);
+        assertEquals("https://example.com/avatar.png", updated.getAvatarUrl());
+        assertEquals("user_demo", updated.getUsername());
+        assertEquals("普通用户演示账号", updated.getNickname());
+    }
+
+    @Test
     void findReturnsNullWhenUserIsDeleted() {
         jdbcTemplate.update("UPDATE `user` SET is_delete = 1 WHERE id = ?", 1);
 
