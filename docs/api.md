@@ -8,9 +8,9 @@
 - 统一响应：`Result<T>`
 - 面向角色：`USER`、`MERCHANT`、`ADMIN`
 
-> 说明 1：当前代码里已落地的接口只有 `GET /stalls`、`POST /stalls`、`GET /dishes`、`POST /dishes`。  
+> 说明 1：当前代码里已落地的核心接口包括认证、用户资料、`GET /stalls`、`POST /stalls`、`GET /dishes`、`POST /dishes`；文件上传仍处于兼容阶段。
 > 说明 2：当前代码中的路径还没有统一加上 `/api/v1` 前缀，本文档按后续规范化方案编写。  
-> 说明 3：当前 `User`、`Order` 还是占位实体，本文档中的字段设计用于后续实现基线。  
+> 说明 3：当前头像上传直接使用 `User.avatarUrl` 保存访问地址；`avatarFileId` 和独立 `File` 表为后续统一文件模型预留。
 
 ## 2. 项目目标
 
@@ -18,7 +18,7 @@
 
 - 普通用户注册、登录、查看个人信息
 - 商家维护摊位和菜品
-- 用户上传头像、菜品图、摊位图等文件
+- 用户上传头像等文件，后续扩展支持菜品图、摊位图
 - 用户浏览摊位和菜品，加入购物车并提交订单
 - 用户查看订单列表
 - 商家查看并处理与自己摊位相关的订单
@@ -125,12 +125,14 @@ Authorization: Bearer <access_token>
 | `username` | string | 是 | 登录用户名，唯一 |
 | `nickname` | string | 是 | 展示昵称 |
 | `phone` | string | 否 | 手机号，建议唯一 |
-| `avatarFileId` | integer | 否 | 头像文件 ID |
-| `avatarUrl` | string | 否 | 头像访问地址 |
+| `avatarFileId` | integer | 否 | 预留的头像文件 ID；当前兼容阶段不生效 |
+| `avatarUrl` | string | 否 | 当前阶段实际保存的头像访问地址 |
 | `role` | string | 是 | `USER` / `MERCHANT` / `ADMIN` |
 | `status` | string | 是 | `ACTIVE` / `DISABLED` |
 | `createTime` | string | 是 | 创建时间，ISO-8601 |
 | `updateTime` | string | 是 | 更新时间，ISO-8601 |
+
+> 兼容设计：当前阶段尚未建立独立的 `File` 表，头像上传只保存 `avatarUrl`；`avatarFileId` 暂不作为当前阶段的必需字段。后续接入 `File` 表后，再通过文件 ID 关联头像、摊位封面和菜品图片。
 
 ## 4.2 MerchantApplication
 
@@ -160,6 +162,8 @@ Authorization: Bearer <access_token>
 | `size` | integer | 是 | 文件大小，单位字节 |
 | `uploadedBy` | integer | 是 | 上传人用户 ID |
 | `createTime` | string | 是 | 上传时间 |
+
+> `File` 是后续统一文件模型的规划实体，当前兼容阶段尚未建表，也不产生持久化的 `fileId`。
 
 ## 4.4 Stall
 
@@ -253,9 +257,9 @@ Authorization: Bearer <access_token>
 | 商家申请 | `GET` | `/merchant-applications/me` | 查看自己的商家申请 | 规划接口 |
 | 商家申请 | `GET` | `/admin/merchant-applications` | 管理员查看商家申请列表 | 规划接口 |
 | 商家申请 | `PATCH` | `/admin/merchant-applications/{id}/review` | 管理员审批商家申请 | 规划接口 |
-| 文件 | `POST` | `/files` | 通用文件上传 | 规划接口 |
-| 文件 | `GET` | `/files/{id}` | 文件元数据 | 规划接口 |
-| 文件 | `DELETE` | `/files/{id}` | 删除文件 | 规划接口 |
+| 文件 | `POST` | `/files` | 头像文件上传（兼容阶段） | 基础能力演进中 |
+| 文件 | `GET` | `/files/{id}` | 文件元数据 | `File` 表落地后实现 |
+| 文件 | `DELETE` | `/files/{id}` | 删除文件 | `File` 表落地后实现 |
 | 摊位 | `GET` | `/stalls` | 摊位列表查询 | 已有基础实现 |
 | 摊位 | `GET` | `/stalls/{id}` | 摊位详情 | 规划接口 |
 | 摊位 | `POST` | `/stalls` | 创建摊位 | 已有基础实现 |
@@ -418,6 +422,10 @@ Authorization: Bearer <access_token>
 
 - 用途：修改个人资料
 - 权限：已登录用户
+- 说明：
+  - 该接口只接收 JSON 请求体，不接收二进制文件或 `multipart/form-data`
+  - 当前兼容阶段不要求传入 `avatarFileId`；头像上传由文件接口处理并保存访问地址
+  - `avatarFileId` 仅作为后续 `File` 表关联字段预留，待文件表落地后再启用
 
 请求体：
 
@@ -425,7 +433,7 @@ Authorization: Bearer <access_token>
 | --- | --- | --- | --- |
 | `nickname` | string | 否 | 昵称 |
 | `phone` | string | 否 | 手机号 |
-| `avatarFileId` | integer | 否 | 头像文件 ID |
+| `avatarFileId` | integer | 否 | 预留字段；当前兼容阶段不生效 |
 
 请求示例：
 
@@ -659,16 +667,49 @@ Authorization: Bearer <access_token>
 
 ## 9.1 `POST /files`
 
-- 用途：通用文件上传
+- 用途：头像文件上传；后续扩展为通用文件上传入口
 - 权限：已登录用户
 - Content-Type：`multipart/form-data`
+- 说明：
+  - 表单字段名必须为 `file`
+  - 后端接收方式等价于 `@RequestParam("file") MultipartFile file`
+  - 当前阶段只支持头像上传，业务类型固定为 `avatar`
+  - `stall-cover`、`dish-image` 仅为后续扩展预留值，当前不能作为已落地能力使用
+  - 文件不能为空，大小不能超过 `2 MB`，当前仅允许 `.jpg` 和 `.png` 扩展名
 
 表单字段：
 
 | 字段 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
 | `file` | file | 是 | 上传文件 |
-| `bizType` | string | 否 | 业务类型，建议值：`avatar`、`stall-cover`、`dish-image` |
+| `bizType` | string | 否 | 业务类型；可省略，当前按 `avatar` 处理；后续预留 `stall-cover`、`dish-image` |
+
+请求示例：
+
+```http
+POST /files HTTP/1.1
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary
+Authorization: Bearer <access_token>
+
+------WebKitFormBoundary
+Content-Disposition: form-data; name="file"; filename="avatar.png"
+Content-Type: image/png
+
+<binary content>
+------WebKitFormBoundary
+Content-Disposition: form-data; name="bizType"
+
+avatar
+------WebKitFormBoundary--
+```
+
+头像上传流程（兼容阶段）：
+
+1. 调用 `POST /files` 上传头像文件
+2. 从响应中获取头像访问地址 `url`
+3. 将该 URL 绑定到当前用户的 `avatarUrl`；当前阶段不依赖 `fileId`
+
+> 后续 `File` 表落地后，上传接口再返回持久化的 `fileId`，并改为通过 `PUT /users/me` 传入 `avatarFileId` 完成关联。
 
 成功响应：
 
@@ -677,9 +718,9 @@ Authorization: Bearer <access_token>
   "code": 1,
   "msg": "success",
   "data": {
-    "fileId": 301,
+    "fileId": null,
     "url": "https://cdn.example.com/upload/301.png",
-    "fileName": "cover.png",
+    "fileName": "avatar.png",
     "contentType": "image/png",
     "size": 20480,
     "uploadedBy": 101,
@@ -688,15 +729,15 @@ Authorization: Bearer <access_token>
 }
 ```
 
-## 9.2 `GET /files/{id}`
+## 9.2 `GET /files/{id}`（后续扩展）
 
-- 用途：查询文件元数据
-- 权限：已登录用户
+- 用途：查询 `File` 表中的文件元数据
+- 状态：当前兼容阶段未实现
 
-## 9.3 `DELETE /files/{id}`
+## 9.3 `DELETE /files/{id}`（后续扩展）
 
-- 用途：删除或失效文件
-- 权限：文件所有者、管理员
+- 用途：删除或失效 `File` 表中的文件
+- 状态：当前兼容阶段未实现
 
 ## 10. 摊位接口
 
@@ -1145,7 +1186,7 @@ Authorization: Bearer <access_token>
 - 当前列表接口返回的是数组，不是分页对象
 - 当前 `stall` 和 `dish` 只实现了查和增，尚未实现改和删
 - 当前 `auth/me` 仍是现有兼容接口，规范化文档建议后续统一迁移到 `GET /users/me`
-- 当前仍没有文件上传、购物车、订单相关代码
+- 当前文件上传仅覆盖头像兼容场景；独立 `File` 表、通用文件查询/删除、购物车和订单相关代码尚未实现
 - 商家申请 / 审批接口属于规划新增，当前代码尚未实现
 - 当前 `Order` 仍为空实体，用户资料修改、密码修改接口尚未实现
 
@@ -1172,9 +1213,9 @@ Authorization: Bearer <access_token>
 4. 管理员查看待审核申请：`GET /admin/merchant-applications?status=PENDING`
 5. 管理员审批通过：`PATCH /admin/merchant-applications/{id}/review`
 6. 用户重新登录：`POST /auth/login`，获取携带 `MERCHANT` 角色的新 token
-7. 上传摊位封面：`POST /files`
+7. 后续扩展支持上传摊位封面：`POST /files`
 8. 创建摊位：`POST /stalls`
-9. 上传菜品图片：`POST /files`
+9. 后续扩展支持上传菜品图片：`POST /files`
 10. 创建菜品：`POST /dishes`
 11. 修改菜品信息：`PUT /dishes/{id}`
 12. 菜品售罄时更新状态：`PATCH /dishes/{id}`
@@ -1188,7 +1229,8 @@ Authorization: Bearer <access_token>
 
 1. 登录鉴权与 `User` 实体
 2. 商家申请 / 审核流程
-3. 文件上传接口
-4. `stall` / `dish` 的完整 CRUD
-5. 购物车接口
-6. 订单提交与订单状态流转
+3. 头像上传接口（兼容阶段）
+4. 独立 `File` 表及通用文件接口
+5. `stall` / `dish` 的完整 CRUD
+6. 购物车接口
+7. 订单提交与订单状态流转

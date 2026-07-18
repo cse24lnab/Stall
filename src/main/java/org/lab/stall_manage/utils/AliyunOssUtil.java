@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.lab.stall_manage.config.AliyunOssProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
@@ -22,19 +23,7 @@ public class AliyunOssUtil {
 
     public String upload(MultipartFile file) throws Exception
     {
-        if (file == null || file.isEmpty())
-        {
-            throw new IllegalArgumentException("文件不能为空");
-        }
-        if(file.getSize() > 2L * 1024 * 1024)
-        {
-            throw new IllegalArgumentException("文件大小不能超过2MB");
-        }
-        // 文件名
-        String originName = file.getOriginalFilename();
-        String extension=originName.substring(originName.lastIndexOf("."));
-        String objectName= UUID.randomUUID()+extension;
-
+        String objectName= UUID.randomUUID()+getExtension(file);
         //密钥
         CredentialsProvider credentialsProvider=new DefaultCredentialProvider(aliyunOssProperties.getAccessKeyId(),aliyunOssProperties.getAccessKeySecret());
 
@@ -65,5 +54,34 @@ public class AliyunOssUtil {
         } finally {
             ossClient.shutdown();
         }
+    }
+
+    private String getExtension(MultipartFile file)
+    {
+        if (file == null || file.isEmpty())
+        {
+            throw new IllegalArgumentException("文件不能为空");
+        }
+        if(file.getSize() > 2L * 1024 * 1024)
+        {
+            throw new IllegalArgumentException("文件大小不能超过2MB");
+        }
+        // 文件名
+        String originName = file.getOriginalFilename();
+        if(!StringUtils.hasText(originName))
+        {
+            throw new IllegalArgumentException("文件名不能为空");
+        }
+        int index = originName.lastIndexOf(".");
+        if(index == -1)
+        {
+            throw new IllegalArgumentException("文件名格式错误");
+        }
+        String extension=originName.substring(originName.lastIndexOf("."));
+        if(!extension.equals(".jpg") && ! extension.equals(".png"))
+        {
+            throw new IllegalArgumentException("图片格式不合法,只能上传jpg或者png");
+        }
+        return extension;
     }
 }

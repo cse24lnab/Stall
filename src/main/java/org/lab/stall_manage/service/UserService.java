@@ -3,6 +3,7 @@ package org.lab.stall_manage.service;
 
 import org.lab.stall_manage.dto.ChangePasswordRequest;
 import org.lab.stall_manage.dto.UpdateMeRequest;
+import org.lab.stall_manage.vo.FileResponse;
 import org.lab.stall_manage.vo.MeResponse;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -32,7 +33,7 @@ public interface UserService {
      * @throws RuntimeException 登录过期
      * @throws IllegalArgumentException 文件不能为空，文件大小不能超过2MB
      */
-    void upLoadAvatar(MultipartFile file);
+    FileResponse upLoadAvatar(MultipartFile file);
 
     /**
      * 用户查看自身信息

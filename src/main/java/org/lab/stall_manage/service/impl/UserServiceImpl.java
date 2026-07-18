@@ -4,11 +4,13 @@ import org.lab.stall_manage.context.BaseContext;
 import org.lab.stall_manage.context.CurrentUser;
 import org.lab.stall_manage.dto.ChangePasswordRequest;
 import org.lab.stall_manage.dto.UpdateMeRequest;
+import org.lab.stall_manage.exception.FileUploadException;
 import org.lab.stall_manage.exception.UserNotExistException;
 import org.lab.stall_manage.mapper.UserMapper;
 import org.lab.stall_manage.pojo.User;
 import org.lab.stall_manage.service.UserService;
 import org.lab.stall_manage.utils.AliyunOssUtil;
+import org.lab.stall_manage.vo.FileResponse;
 import org.lab.stall_manage.vo.MeResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -88,7 +91,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void upLoadAvatar(MultipartFile file) {
+    public FileResponse upLoadAvatar(MultipartFile file) {
         //defend
         if(file == null || file.isEmpty())
         {
@@ -97,12 +100,16 @@ public class UserServiceImpl implements UserService {
         try {
             String uploadUrl = aliyunOssUtil.upload(file);
             Integer id=getCurrentId();
-            User user=new User();
-            user.setId(id);
-            user.setAvatarUrl(uploadUrl);
-            userMapper.update(user);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+            //fileName相信aliyunOssUtil已经处理了异常
+            //当前无file表，fileid返回null
+            //todo stall 和 dish都要上传图片，到时会统一成file表
+            return new FileResponse(null,uploadUrl,file.getOriginalFilename(),file.getContentType(),file.getSize(),id, LocalDateTime.now());
+        }
+        catch (RuntimeException rex){
+            throw rex;
+        }
+        catch (Exception e) {
+            throw new FileUploadException(e.getMessage());
         }
     }
 

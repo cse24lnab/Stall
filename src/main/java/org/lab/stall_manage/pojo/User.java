@@ -21,8 +21,11 @@ public class User {
     private String passwordHash;
     private String nickname;
     private String phone;
+
+    //兼容设计
     private Integer avatarFileId;
     private String avatarUrl;
+
     private UserRole role;
     private Status status;
     private LocalDateTime createTime;
