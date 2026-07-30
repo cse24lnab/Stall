@@ -22,12 +22,52 @@
         </where>
         ORDER BY `id` ASC
     </select>
+    <select id="findById" resultType="org.lab.stall_manage.pojo.Dish">
+        SELECT * FROM dish WHERE id=#{id} AND is_delete=0
+    </select>
+    <select id="findForManagement" resultType="org.lab.stall_manage.pojo.Dish">
+        SELECT d.*
+        FROM dish d
+        JOIN stall s ON s.id = d.stall_id AND s.is_delete = 0
+        <where>
+            AND d.is_delete = 0
+            <if test="dish.stallId != null">
+                AND d.stall_id = #{dish.stallId}
+            </if>
+            <if test="dish.name != null and dish.name != ''">
+                AND d.name = #{dish.name}
+            </if>
+            <if test="dish.price != null">
+                AND d.price = #{dish.price}
+            </if>
+            <if test="dish.id != null">
+                AND d.id = #{dish.id}
+            </if>
+            <if test="ownerUserId != null">
+                AND s.owner_user_id = #{ownerUserId}
+            </if>
+        </where>
+        ORDER BY d.id ASC
+    </select>
+    <select id="findManageableId" resultType="java.lang.Integer">
+        SELECT d.id
+        FROM dish d
+        JOIN stall s ON s.id = d.stall_id AND s.is_delete = 0
+        WHERE d.is_delete = 0
+          AND d.id IN
+        <foreach collection="ids" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+        <if test="ownerUserId != null">
+            AND s.owner_user_id = #{ownerUserId}
+        </if>
+    </select>
     <insert id="add" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO `dish`(`stall_id`,`name`,`price`,`is_sold_out`)
         VALUES (#{stallId},#{name},#{price},#{isSoldOut});
     </insert>
     <update id="deleteById">
-        UPDATE `dish` SET is_delete=1 WHERE id IN
+        UPDATE `dish` SET is_delete=1 WHERE is_delete=0 AND id IN
             <foreach collection="ids" item="id" open="(" separator="," close=")">
                 #{id}
             </foreach>

@@ -22,14 +22,12 @@ public class StallMapperTest {
 
     @Test
     void findById() {
-        Stall query = new Stall();
-        query.setId(1);
+        Stall stall = stallMapper.findById(1);
 
-        List<Stall> stalls = stallMapper.find(query);
-
-        assertEquals(1, stalls.size());
-        assertEquals("烤冷面", stalls.get(0).getName());
-        assertEquals(1, stalls.get(0).getCurrentStatus());
+        assertNotNull(stall);
+        assertEquals("烤冷面", stall.getName());
+        assertEquals(1, stall.getCurrentStatus());
+        assertEquals(2, stall.getOwnerUserId());
     }
 
     @Test
@@ -63,6 +61,7 @@ public class StallMapperTest {
         stall.setNoonEndTime(LocalTime.of(13, 30));
         stall.setEveningStartTime(LocalTime.of(17, 30));
         stall.setEveningEndTime(LocalTime.of(21, 0));
+        stall.setOwnerUserId(2);
 
         int inserted = stallMapper.add(stall);
 
@@ -76,6 +75,7 @@ public class StallMapperTest {
         assertEquals(1, insertedStalls.size());
         assertEquals(stall.getId(), insertedStalls.get(0).getId());
         assertEquals(1, insertedStalls.get(0).getCurrentStatus());
+        assertEquals(2, insertedStalls.get(0).getOwnerUserId());
     }
 
     @Test

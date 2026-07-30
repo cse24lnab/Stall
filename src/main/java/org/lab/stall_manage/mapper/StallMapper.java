@@ -9,6 +9,8 @@ public interface StallMapper {
     //todo 分页查询和根据名字模糊查询
     List<Stall> find(Stall stall);
 
+    Stall findById(Integer id);
+
     int add(Stall stall);
 
     int delete(List<Integer> ids);

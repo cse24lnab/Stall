@@ -1,7 +1,12 @@
 package org.lab.stall_manage;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.lab.stall_manage.context.BaseContext;
+import org.lab.stall_manage.context.CurrentUser;
 import org.lab.stall_manage.pojo.Stall;
+import org.lab.stall_manage.pojo.enums.UserRole;
 import org.lab.stall_manage.service.StallService;
 import org.lab.stall_manage.vo.PageVO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +21,16 @@ class StallServicePaginationIntegrationTest {
 
     @Autowired
     private StallService stallService;
+
+    @BeforeEach
+    void loginAsAdmin() {
+        BaseContext.setCurrentUser(new CurrentUser(3, "admin_demo", UserRole.ADMIN));
+    }
+
+    @AfterEach
+    void clearContext() {
+        BaseContext.RemoveCurrentUser();
+    }
 
     @Test
     void findReturnsFirstPage() {

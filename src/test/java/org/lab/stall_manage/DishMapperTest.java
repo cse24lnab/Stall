@@ -12,12 +12,42 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @Transactional
 public class DishMapperTest {
     @Autowired
     private DishMapper dishMapper;
+
+    @Test
+    void findByIdReturnsDish() {
+        Dish dish = dishMapper.findById(1);
+
+        assertNotNull(dish);
+        assertEquals(1, dish.getStallId());
+    }
+
+    @Test
+    void adminManagementQueryReturnsAllDishes() {
+        List<Dish> dishes = dishMapper.findForManagement(new Dish(), null);
+
+        assertEquals(3, dishes.size());
+    }
+
+    @Test
+    void merchantManagementQueryReturnsOwnedDishes() {
+        List<Dish> dishes = dishMapper.findForManagement(new Dish(), 2);
+
+        assertEquals(2, dishes.size());
+        assertTrue(dishes.stream().allMatch(dish -> dish.getStallId() == 1));
+    }
+
+    @Test
+    void findManageableIdFiltersByOwner() {
+        assertEquals(List.of(1, 2), dishMapper.findManageableId(List.of(1, 2, 3), 2));
+        assertEquals(List.of(1, 2, 3), dishMapper.findManageableId(List.of(1, 2, 3), null));
+    }
 
     @Test
     void findByStallId() {

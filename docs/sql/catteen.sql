@@ -16,6 +16,7 @@ CREATE TABLE `stall` (
     `noon_end_time`      TIME DEFAULT NULL COMMENT '中午结束时间',
     `evening_start_time` TIME DEFAULT NULL COMMENT '晚上开始时间',
     `evening_end_time`   TIME DEFAULT NULL COMMENT '晚上结束时间',
+    `owner_user_id`      INT NOT NULL COMMENT '所属商家用户ID',
 
     -- 自动记录时间
     `create_time`        DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -65,9 +66,9 @@ CREATE TABLE `user` (
 
 -- 4. 给 stall 初始化一个数据
 INSERT INTO `stall`
-(`id`, `name`, `current_status`, `noon_location`, `evening_location`, `noon_start_time`, `noon_end_time`, `evening_start_time`, `evening_end_time`, `create_time`, `update_time`)
+(`id`, `name`, `current_status`, `noon_location`, `evening_location`, `noon_start_time`, `noon_end_time`, `evening_start_time`, `evening_end_time`, `owner_user_id`, `create_time`, `update_time`)
 VALUES
-    (1, '烤冷面', 1, '东一门', '西二门', '12:00:00', '13:00:00', '17:00:00', '23:00:00', NOW(), NOW());
+    (1, '烤冷面', 1, '东一门', '西二门', '12:00:00', '13:00:00', '17:00:00', '23:00:00', 2, NOW(), NOW());
 
 -- 5. 给 dish 初始化一个数据
 INSERT INTO `dish`

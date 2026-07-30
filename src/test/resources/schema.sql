@@ -12,6 +12,7 @@ CREATE TABLE stall (
     noon_end_time TIME,
     evening_start_time TIME,
     evening_end_time TIME,
+    owner_user_id INT NOT NULL,
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     is_delete TINYINT(1) NOT NULL DEFAULT 0,

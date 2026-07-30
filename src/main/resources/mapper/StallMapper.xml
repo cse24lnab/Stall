@@ -13,12 +13,18 @@
                     <if test="name !=null and name!=''">
                         AND `name`=#{name}
                     </if>
+                    <if test="ownerUserId !=null">
+                        AND `owner_user_id`=#{ownerUserId}
+                    </if>
                 </where>
             ORDER BY `id` ASC
         </select>
-        <insert id="add" useGeneratedKeys="true" keyProperty="id">
-            INSERT INTO `stall` (`name`,`current_status`,`noon_location`,`evening_location`,`noon_start_time`,`noon_end_time`,`evening_start_time`,`evening_end_time`)
-            VALUES (#{name},#{currentStatus},#{noonLocation},#{eveningLocation},#{noonStartTime},#{noonEndTime},#{eveningStartTime},#{eveningEndTime});
+    <select id="findById" resultType="org.lab.stall_manage.pojo.Stall">
+        SELECT * FROM stall WHERE id=#{id} AND is_delete=0
+    </select>
+    <insert id="add" useGeneratedKeys="true" keyProperty="id">
+            INSERT INTO `stall` (`name`,`current_status`,`noon_location`,`evening_location`,`noon_start_time`,`noon_end_time`,`evening_start_time`,`evening_end_time`,`owner_user_id`)
+            VALUES (#{name},#{currentStatus},#{noonLocation},#{eveningLocation},#{noonStartTime},#{noonEndTime},#{eveningStartTime},#{eveningEndTime},#{ownerUserId});
         </insert>
         <update id="delete">
             UPDATE `stall` SET is_delete=1 WHERE id IN 

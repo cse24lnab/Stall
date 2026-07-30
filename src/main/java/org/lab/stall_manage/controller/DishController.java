@@ -1,6 +1,7 @@
 package org.lab.stall_manage.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Positive;
 import lombok.extern.slf4j.Slf4j;
 import org.lab.stall_manage.annotation.RequireRole;
@@ -24,17 +25,19 @@ public class DishController {
     @Autowired
     private DishService dishService;
 
+    @RequireRole({UserRole.ADMIN, UserRole.MERCHANT})
     @GetMapping("/dishes")
     public Result<PageVO<Dish>> find(
             Dish dish,
             @RequestParam(defaultValue = "1") @Positive(message = "page must be greater than 0") int page,
-            @RequestParam(defaultValue = "10") @Positive(message = "pageSize must be greater than 0") int pageSize)
+            @RequestParam(defaultValue = "10") @Positive(message = "pageSize must be greater than 0")  @Max(value = 50,message = "pageSize must be less than 50") int pageSize)
     {
         log.info("查询菜品，条件为{}",dish);
         PageVO<Dish>result = dishService.find(page,pageSize,dish);
         return Result.success(result);
     }
 
+    @RequireRole({UserRole.ADMIN, UserRole.MERCHANT})
     @GetMapping("/dishes/{id}")
     public Result<Dish> findById(@PathVariable @Positive(message = "id必须大于0") Integer id)
     {
