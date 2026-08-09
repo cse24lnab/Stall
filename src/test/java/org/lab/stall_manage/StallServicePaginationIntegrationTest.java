@@ -49,4 +49,16 @@ class StallServicePaginationIntegrationTest {
         assertEquals(1, page.getRecords().size());
         assertEquals(2, page.getRecords().get(0).getId());
     }
+
+    @Test
+    void findCombinesPartialNameAndCurrentStatus() {
+        Stall query = new Stall();
+        query.setName("煎");
+        query.setCurrentStatus(0);
+
+        PageVO<Stall> page = stallService.find(1, 10, query);
+
+        assertEquals(1, page.getTotal());
+        assertEquals(2, page.getRecords().get(0).getId());
+    }
 }

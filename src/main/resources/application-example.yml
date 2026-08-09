@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: stall_manage
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/canteen?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+    default-enum-type-handler: org.apache.ibatis.type.EnumOrdinalTypeHandler
+
+lab:
+  jwt:
+    secret-key: ${JWT_SECRET}
+    time: ${JWT_EXPIRE_MS:360000}
+
+pagehelper:
+  helper-dialect: mysql
+  reasonable: true
+  support-methods-arguments: true
+
+aliyun:
+  oss:
+    endpoint: "${ALIYUN_OSS_ENDPOINT:}"
+    access-key-id: "${ALIYUN_OSS_KEY_ID:}"
+    access-key-secret: "${ALIYUN_OSS_KEY_SECRET:}"
+    bucket-name: "${ALIYUN_OSS_BUCKET_NAME:}"

@@ -11,11 +11,14 @@
                         AND `id`=#{id}
                     </if>
                     <if test="name !=null and name!=''">
-                        AND `name`=#{name}
+                        AND `name` LIKE CONCAT('%',#{name},'%')
                     </if>
                     <if test="ownerUserId !=null">
                         AND `owner_user_id`=#{ownerUserId}
                     </if>
+                     <if test="currentStatus != null">
+                         AND `current_status`=#{currentStatus}
+                     </if>
                 </where>
             ORDER BY `id` ASC
         </select>

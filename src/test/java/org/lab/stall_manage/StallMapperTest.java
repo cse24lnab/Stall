@@ -5,6 +5,7 @@ import org.lab.stall_manage.pojo.Stall;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalTime;
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
 @Transactional
@@ -41,6 +43,41 @@ public class StallMapperTest {
         Stall stall = stalls.get(0);
         assertEquals(2, stall.getId());
         assertEquals(0, stall.getCurrentStatus());
+    }
+
+    @Test
+    void findSupportsPartialName() {
+        Stall query = new Stall();
+        query.setName("冷面");
+
+        List<Stall> stalls = stallMapper.find(query);
+
+        assertEquals(1, stalls.size());
+        assertEquals(1, stalls.get(0).getId());
+    }
+
+    @Test
+    void findSupportsCurrentStatus() {
+        Stall query = new Stall();
+        query.setCurrentStatus(0);
+
+        List<Stall> stalls = stallMapper.find(query);
+
+        assertEquals(1, stalls.size());
+        assertEquals(2, stalls.get(0).getId());
+    }
+
+    @Test
+    void findCombinesOwnerNameAndStatus() {
+        Stall query = new Stall();
+        query.setOwnerUserId(4);
+        query.setName("煎");
+        query.setCurrentStatus(0);
+
+        List<Stall> stalls = stallMapper.find(query);
+
+        assertEquals(1, stalls.size());
+        assertEquals(2, stalls.get(0).getId());
     }
 
     @Test
@@ -76,6 +113,41 @@ public class StallMapperTest {
         assertEquals(stall.getId(), insertedStalls.get(0).getId());
         assertEquals(1, insertedStalls.get(0).getCurrentStatus());
         assertEquals(2, insertedStalls.get(0).getOwnerUserId());
+    }
+
+    @Test
+    void activeStallNameMustBeUnique() {
+        Stall duplicate = new Stall();
+        duplicate.setName("烤冷面");
+        duplicate.setCurrentStatus(0);
+        duplicate.setOwnerUserId(2);
+
+        assertThrows(DataIntegrityViolationException.class, () -> stallMapper.add(duplicate));
+    }
+
+    @Test
+    void deletedStallNameCanBeReusedRepeatedly() {
+        assertEquals(1, stallMapper.delete(List.of(1)));
+
+        Stall replacement = new Stall();
+        replacement.setName("烤冷面");
+        replacement.setCurrentStatus(0);
+        replacement.setOwnerUserId(2);
+        assertEquals(1, stallMapper.add(replacement));
+
+        assertEquals(1, stallMapper.delete(List.of(replacement.getId())));
+
+        Stall secondReplacement = new Stall();
+        secondReplacement.setName("烤冷面");
+        secondReplacement.setCurrentStatus(1);
+        secondReplacement.setOwnerUserId(2);
+        assertEquals(1, stallMapper.add(secondReplacement));
+
+        Stall query = new Stall();
+        query.setName("烤冷面");
+        List<Stall> activeStalls = stallMapper.find(query);
+        assertEquals(1, activeStalls.size());
+        assertEquals(secondReplacement.getId(), activeStalls.get(0).getId());
     }
 
     @Test

@@ -5,6 +5,7 @@ import org.lab.stall_manage.pojo.Dish;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
@@ -41,6 +43,40 @@ public class DishMapperTest {
 
         assertEquals(2, dishes.size());
         assertTrue(dishes.stream().allMatch(dish -> dish.getStallId() == 1));
+    }
+
+    @Test
+    void managementQuerySupportsPartialName() {
+        Dish query = new Dish();
+        query.setName("冷面");
+
+        List<Dish> dishes = dishMapper.findForManagement(query, null);
+
+        assertEquals(2, dishes.size());
+        assertTrue(dishes.stream().allMatch(dish -> dish.getName().contains("冷面")));
+    }
+
+    @Test
+    void managementQuerySupportsSoldOutStatus() {
+        Dish query = new Dish();
+        query.setIsSoldOut(1);
+
+        List<Dish> dishes = dishMapper.findForManagement(query, null);
+
+        assertEquals(1, dishes.size());
+        assertEquals(2, dishes.get(0).getId());
+    }
+
+    @Test
+    void managementQueryCombinesOwnerNameAndStatus() {
+        Dish query = new Dish();
+        query.setName("冷面");
+        query.setIsSoldOut(0);
+
+        List<Dish> dishes = dishMapper.findForManagement(query, 2);
+
+        assertEquals(1, dishes.size());
+        assertEquals(1, dishes.get(0).getId());
     }
 
     @Test
@@ -123,6 +159,57 @@ public class DishMapperTest {
         assertEquals(1, insertedDishes.size());
         assertEquals(dish.getId(), insertedDishes.get(0).getId());
         assertEquals(1, insertedDishes.get(0).getIsSoldOut());
+    }
+
+    @Test
+    void activeDishNameMustBeUniqueWithinStall() {
+        Dish duplicate = new Dish();
+        duplicate.setStallId(1);
+        duplicate.setName("招牌烤冷面");
+        duplicate.setPrice(new BigDecimal("13.50"));
+        duplicate.setIsSoldOut(0);
+
+        assertThrows(DataIntegrityViolationException.class, () -> dishMapper.add(duplicate));
+    }
+
+    @Test
+    void differentStallsCanUseSameActiveDishName() {
+        Dish dish = new Dish();
+        dish.setStallId(2);
+        dish.setName("招牌烤冷面");
+        dish.setPrice(new BigDecimal("11.50"));
+        dish.setIsSoldOut(0);
+
+        assertEquals(1, dishMapper.add(dish));
+        assertNotNull(dish.getId());
+    }
+
+    @Test
+    void deletedDishNameCanBeReusedRepeatedlyWithinStall() {
+        assertEquals(1, dishMapper.deleteById(List.of(1)));
+
+        Dish replacement = new Dish();
+        replacement.setStallId(1);
+        replacement.setName("招牌烤冷面");
+        replacement.setPrice(new BigDecimal("13.00"));
+        replacement.setIsSoldOut(0);
+        assertEquals(1, dishMapper.add(replacement));
+
+        assertEquals(1, dishMapper.deleteById(List.of(replacement.getId())));
+
+        Dish secondReplacement = new Dish();
+        secondReplacement.setStallId(1);
+        secondReplacement.setName("招牌烤冷面");
+        secondReplacement.setPrice(new BigDecimal("14.00"));
+        secondReplacement.setIsSoldOut(1);
+        assertEquals(1, dishMapper.add(secondReplacement));
+
+        Dish query = new Dish();
+        query.setStallId(1);
+        query.setName("招牌烤冷面");
+        List<Dish> activeDishes = dishMapper.find(query);
+        assertEquals(1, activeDishes.size());
+        assertEquals(secondReplacement.getId(), activeDishes.get(0).getId());
     }
 
     @Test

@@ -22,26 +22,32 @@ CREATE TABLE `stall` (
     `create_time`        DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `update_time`        DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后更新时间',
     `is_delete`          TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除标记：0-正常, 1-已删除',
+    `active_name`        VARCHAR(100) GENERATED ALWAYS AS (
+        CASE WHEN `is_delete` = 0 THEN `name` ELSE NULL END
+    ) STORED COMMENT '仅有效记录保留名称，用于逻辑删除唯一约束',
 
     PRIMARY KEY (`id`),
-    UNIQUE KEY `index_name` (`name`)
+    UNIQUE KEY `uk_stall_active_name` (`active_name`),
+    KEY `idx_stall_owner_delete_id` (`owner_user_id`, `is_delete`, `id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='摊位基本信息表';
 
 -- 2. 创建菜品表 (Dish)
 CREATE TABLE `dish` (
     `id`          INT NOT NULL AUTO_INCREMENT COMMENT '菜品ID',
-    `stall_id`    INT NOT NULL COMMENT '所属摊位ID (外键)',
+    `stall_id`    INT NOT NULL COMMENT '所属摊位ID，由应用层校验关联关系',
     `name`        VARCHAR(100) NOT NULL COMMENT '菜品名称',
     `price`       DECIMAL(10, 2) NOT NULL COMMENT '价格',
     `is_sold_out` INT NOT NULL DEFAULT 0 COMMENT '状态: 0=有货, 1=售罄',
     `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `is_delete`   TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除标记：0-正常, 1-已删除',
+    `active_name` VARCHAR(100) GENERATED ALWAYS AS (
+        CASE WHEN `is_delete` = 0 THEN `name` ELSE NULL END
+    ) STORED COMMENT '仅有效记录保留名称，用于逻辑删除唯一约束',
 
     PRIMARY KEY (`id`),
-    UNIQUE KEY `index_name` (`name`),
-    KEY `fk_dish_stall` (`stall_id`),
-    CONSTRAINT `fk_dish_stall` FOREIGN KEY (`stall_id`) REFERENCES `stall` (`id`)
+    UNIQUE KEY `uk_dish_stall_active_name` (`stall_id`, `active_name`),
+    KEY `idx_dish_stall_delete_id` (`stall_id`, `is_delete`, `id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='摊位菜品表';
 
 -- 3. 创建用户表 (User)

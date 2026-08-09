@@ -16,8 +16,14 @@ CREATE TABLE stall (
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     is_delete TINYINT(1) NOT NULL DEFAULT 0,
-    CONSTRAINT uk_stall_name UNIQUE (name)
+    active_name VARCHAR(100) GENERATED ALWAYS AS (
+        CASE WHEN is_delete = 0 THEN name ELSE NULL END
+    ),
+    CONSTRAINT uk_stall_active_name UNIQUE (active_name)
 );
+
+CREATE INDEX idx_stall_owner_delete_id
+    ON stall(owner_user_id, is_delete, id);
 
 CREATE TABLE dish (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -28,9 +34,14 @@ CREATE TABLE dish (
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     is_delete TINYINT(1) NOT NULL DEFAULT 0,
-    CONSTRAINT uk_dish_name UNIQUE (name),
-    CONSTRAINT fk_dish_stall FOREIGN KEY (stall_id) REFERENCES stall (id)
+    active_name VARCHAR(100) GENERATED ALWAYS AS (
+        CASE WHEN is_delete = 0 THEN name ELSE NULL END
+    ),
+    CONSTRAINT uk_dish_stall_active_name UNIQUE (stall_id, active_name)
 );
+
+CREATE INDEX idx_dish_stall_delete_id
+    ON dish(stall_id, is_delete, id);
 
 CREATE TABLE `user` (
     id INT AUTO_INCREMENT PRIMARY KEY,

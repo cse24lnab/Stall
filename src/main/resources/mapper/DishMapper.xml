@@ -35,13 +35,16 @@
                 AND d.stall_id = #{dish.stallId}
             </if>
             <if test="dish.name != null and dish.name != ''">
-                AND d.name = #{dish.name}
+                AND d.name LIKE CONCAT('%', #{dish.name}, '%')
             </if>
             <if test="dish.price != null">
                 AND d.price = #{dish.price}
             </if>
             <if test="dish.id != null">
                 AND d.id = #{dish.id}
+            </if>
+            <if test="dish.isSoldOut != null">
+                AND d.is_sold_out = #{dish.isSoldOut}
             </if>
             <if test="ownerUserId != null">
                 AND s.owner_user_id = #{ownerUserId}

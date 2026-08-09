@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
@@ -70,13 +71,15 @@ class DishControllerTest {
         mockMvc.perform(get("/dishes")
                         .param("page", "1")
                         .param("pageSize", "1")
-                        .param("stallId", "1"))
+                        .param("name", "dish")
+                        .param("isSoldOut", "0"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(1))
                 .andExpect(jsonPath("$.data.total").value(2))
                 .andExpect(jsonPath("$.data.records[0].name").value("dish-a"));
 
-        verify(dishService).find(eq(1), eq(1), any(Dish.class));
+        verify(dishService).find(eq(1), eq(1), argThat(dish ->
+                "dish".equals(dish.getName()) && Integer.valueOf(0).equals(dish.getIsSoldOut())));
     }
 
     @Test

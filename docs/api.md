@@ -210,8 +210,7 @@ JWT 中包含 `id`、`username` 和 `role`。当前角色为：
 
 查询当前登录用户资料。
 
-- 权限：`ADMIN`、`MERCHANT`
-- `ADMIN` 查询全部摊位；`MERCHANT` 强制按当前用户 ID 查询自己的摊位
+- 权限：已登录用户
 
 成功响应：
 
@@ -356,7 +355,8 @@ curl -X POST http://localhost:8080/files \
 
 分页查询未被逻辑删除的摊位。
 
-- 权限：已登录用户
+- 权限：`ADMIN`、`MERCHANT`
+- `ADMIN` 查询全部摊位；`MERCHANT` 仅查询自己的摊位，客户端传入的 `ownerUserId` 不会扩大查询范围
 - 当前按 `id ASC` 排序
 
 查询参数：
@@ -366,12 +366,13 @@ curl -X POST http://localhost:8080/files \
 | `page` | integer | 否 | 默认 `1`，必须大于 `0` |
 | `pageSize` | integer | 否 | 默认 `10`，必须大于 `0`且不超过 `50` |
 | `id` | integer | 否 | 按 ID 精确查询 |
-| `name` | string | 否 | 按名称精确查询，当前不是模糊查询 |
+| `name` | string | 否 | 按名称进行包含式模糊查询 |
+| `currentStatus` | integer | 否 | 按营业状态精确筛选，当前使用 `0`、`1` |
 
 请求示例：
 
 ```http
-GET /stalls?page=1&pageSize=10&name=烤冷面
+GET /stalls?page=1&pageSize=10&name=冷面&currentStatus=1
 Authorization: Bearer <access_token>
 ```
 
@@ -420,6 +421,7 @@ Authorization: Bearer <access_token>
 - 权限：`ADMIN`
 - Content-Type：`application/json`
 - `name` 必填
+- `name` 在未删除摊位中全局唯一；逻辑删除后允许重新使用
 - `ownerUserId` 必填，且必须对应一个真实的 `MERCHANT` 用户
 - `currentStatus` 省略时默认为 `0`
 
@@ -490,8 +492,16 @@ Authorization: Bearer <admin-token>
 | `pageSize` | integer | 否 | 默认 `10`，必须大于 `0`且不超过 `50` |
 | `id` | integer | 否 | 按 ID 精确查询 |
 | `stallId` | integer | 否 | 按所属摊位查询 |
-| `name` | string | 否 | 按名称精确查询，当前不是模糊查询 |
+| `name` | string | 否 | 按名称进行包含式模糊查询 |
 | `price` | number | 否 | 按价格精确查询 |
+| `isSoldOut` | integer | 否 | 按售罄状态精确筛选，当前使用 `0`、`1` |
+
+查询条件可组合使用。例如：
+
+```http
+GET /dishes?page=1&pageSize=10&name=冷面&isSoldOut=0
+Authorization: Bearer <access_token>
+```
 
 成功响应：
 
@@ -535,6 +545,7 @@ Authorization: Bearer <admin-token>
 - `ADMIN` 可在任意有效商家摊位下新增菜品
 - `MERCHANT` 只能在自己的摊位下新增菜品
 - `stallId`、`name`、`price` 必填
+- 同一摊位内未删除菜品的 `name` 唯一；不同摊位允许使用相同菜品名
 - `price` 不能小于 `0`
 - `isSoldOut` 省略时默认为 `0`
 - 目标摊位不存在时返回 `摊位不存在`
@@ -600,10 +611,7 @@ Authorization: Bearer <access_token>
 ## 10. 已知限制
 
 - 摊位和菜品查询是后台管理接口，只允许 `ADMIN` 和 `MERCHANT`，尚未开放顾客浏览
-- 摊位和菜品名称当前是精确查询，不支持模糊查询
 - 用户禁用状态尚未参与登录判断
-- 逻辑删除后，摊位和菜品名称仍受唯一索引占用
-- `dish.name` 当前全局唯一，不允许不同摊位使用相同菜品名
 - 文件上传只校验大小和扩展名，没有校验真实文件内容
 - 当前业务异常尚未全面映射为标准 HTTP 状态码
 
@@ -611,10 +619,9 @@ Authorization: Bearer <access_token>
 
 ### 11.1 后台管理系统近期计划
 
-1. 增加营业状态、售罄状态筛选和名称模糊搜索
-2. 支持摊位封面或菜品图片上传
-3. 增加 README、配置模板和 OpenAPI/Swagger
-4. 根据实际查询补充联合索引并使用 `EXPLAIN` 验证
+1. 接入 OpenAPI/Swagger
+2. 统一 401/403 JSON 响应
+3. 增加少量真实 HTTP -> Service -> Mapper -> H2 端到端测试
 
 ### 11.2 外卖系统远期扩展
 

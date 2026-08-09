@@ -21,6 +21,7 @@ import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
@@ -65,13 +66,15 @@ class StallControllerTest {
         mockMvc.perform(get("/stalls")
                         .param("page", "1")
                         .param("pageSize", "1")
-                        .param("name", "stall-a"))
+                        .param("name", "stall")
+                        .param("currentStatus", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(1))
                 .andExpect(jsonPath("$.data.total").value(1))
                 .andExpect(jsonPath("$.data.records[0].name").value("stall-a"));
 
-        verify(stallService).find(eq(1), eq(1), any(Stall.class));
+        verify(stallService).find(eq(1), eq(1), argThat(stall ->
+                "stall".equals(stall.getName()) && Integer.valueOf(1).equals(stall.getCurrentStatus())));
     }
 
     @Test

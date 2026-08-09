@@ -62,4 +62,16 @@ class DishServicePaginationIntegrationTest {
         assertEquals(1, page.getRecords().size());
         assertEquals(1, page.getRecords().get(0).getId());
     }
+
+    @Test
+    void findCombinesPartialNameAndSoldOutStatus() {
+        Dish query = new Dish();
+        query.setName("冷面");
+        query.setIsSoldOut(1);
+
+        PageVO<Dish> page = dishService.find(1, 10, query);
+
+        assertEquals(1, page.getTotal());
+        assertEquals(2, page.getRecords().get(0).getId());
+    }
 }
