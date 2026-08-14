@@ -1,0 +1,11 @@
+.git
+.idea
+.m2
+logs
+target
+*.iml
+nginx.zip
+**/*.log
+.env
+*.env
+src/main/resources/application.yml

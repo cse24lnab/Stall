@@ -68,7 +68,7 @@ src/main/resources/mapper   MyBatis XML
 src/test/java               单元测试和集成测试
 src/test/resources          H2 配置、DDL 和初始化数据
 docs/api.md                 完整接口文档
-docs/sql/catteen.sql        MySQL 新建库脚本
+docs/sql/canteen.sql        MySQL 新建库脚本
 docs/sql/migration          已有数据库升级脚本
 ```
 
@@ -152,7 +152,7 @@ MySQL 8.4.6 独立压测库结果：
 新建数据库时执行：
 
 ```bash
-mysql -u root -p < docs/sql/catteen.sql
+mysql -u root -p < docs/sql/canteen.sql
 ```
 
 如果数据库来自旧版建表脚本，先选择目标数据库，再执行迁移：
@@ -210,7 +210,7 @@ mvn spring-boot:run
 
 ### 4. 本地演示账号
 
-`catteen.sql` 初始化了以下仅供本地演示的账号，初始密码均为 `12345678`：
+`canteen.sql` 初始化了以下仅供本地演示的账号，初始密码均为 `12345678`：
 
 | 用户名 | 角色 |
 | --- | --- |

@@ -1,0 +1,39 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:?password is needed}"
+      MYSQL_DATABASE: "canteen"
+      MYSQL_USER: "${DB_USERNAME:-stall_app}"
+      MYSQL_PASSWORD: "${DB_PASSWORD:?password is needed}"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docs/sql/canteen.sql:/docker-entrypoint-initdb.d/01-catteen.sql:ro
+    healthcheck:
+      test: [ "CMD-SHELL", 'mysqladmin ping -h 127.0.0.1 -uroot -p"$${MYSQL_ROOT_PASSWORD}" --silent' ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  app:
+    build: .
+    image: stall_app:dev
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: example
+      DB_URL: "jdbc:mysql://mysql:3306/canteen?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8"
+      DB_USERNAME: "${DB_USERNAME:-stall_app}"
+      DB_PASSWORD: "${DB_PASSWORD:?password is needed}"
+      JWT_SECRET: "${JWT_SECRET:?jwt secret is needed}"
+      JWT_EXPIRE_MS: "${JWT_EXPIRE_MS:-360000}"
+      ALIYUN_OSS_ENDPOINT: "${ALIYUN_OSS_ENDPOINT:-}"
+      ALIYUN_OSS_KEY_ID: "${ALIYUN_OSS_KEY_ID:-}"
+      ALIYUN_OSS_KEY_SECRET: "${ALIYUN_OSS_KEY_SECRET:-}"
+      ALIYUN_OSS_BUCKET_NAME: "${ALIYUN_OSS_BUCKET_NAME:-}"
+    depends_on:
+      mysql:
+        condition: service_healthy
+volumes:
+  mysql_data:

@@ -1,4 +1,4 @@
--- Apply once to a database created from the original catteen.sql.
+-- Apply once to a database created from the original canteen.sql.
 -- Select the target schema before running this migration.
 
 ALTER TABLE `stall`
