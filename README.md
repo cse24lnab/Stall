@@ -1,6 +1,6 @@
 # stall_manage
 
-`stall_manage` 是一个面向校园场景的摊位与菜品后台管理系统，采用 Spring Boot + MyBatis XML 实现。项目当前聚焦后台管理能力，用于展示认证鉴权、角色与数据权限、逻辑删除、分页筛选、事务、索引设计和分层测试。
+`stall_manage` 是一个面向校园场景的摊位与菜品后台管理系统，采用 Spring Boot + MyBatis XML 实现。
 
 > 当前不包含顾客浏览、购物车、订单、支付和配送等外卖功能。这些能力属于后续扩展方向，不是当前可用接口。
 
@@ -26,25 +26,19 @@
 | `MERCHANT` | 只能查看自己的摊位 | 只能管理自己摊位下的菜品 | 管理自己的资料与头像 |
 | `USER` | 无权访问后台接口 | 无权访问后台接口 | 管理自己的资料与头像 |
 
-资源归属规则：
-
-- `stall.owner_user_id` 表示摊位所属商家。
-- `dish` 通过 `stall_id` 间接归属于商家。
-- Controller 使用 `@RequireRole` 控制角色入口，Service 再校验资源归属，避免只依赖客户端查询参数。
-- 菜品批量删除采用严格原子策略：只要请求中混入不存在或越权 ID，整批拒绝，不执行部分删除。
-
 ## 技术栈
 
 | 分类 | 技术 |
 | --- | --- |
 | 语言 | Java 17 |
-| Web 框架 | Spring Boot 3.5.11、Spring MVC、Spring Validation |
+| Web 框架 | Spring Boot 3.5.11、Spring MVC|
 | 数据访问 | MyBatis 3.0.5、MyBatis XML、PageHelper 1.4.6 |
 | 数据库 | MySQL、H2（测试） |
-| 认证与安全 | JWT (`jjwt 0.9.1`)、BCrypt |
+| 认证与安全 | JWT 、BCrypt |
 | 文件存储 | 阿里云 OSS SDK 3.17.4（当前仅用于用户头像） |
 | 测试 | JUnit 5、Mockito、MockMvc、Spring Boot Test |
-| 构建 | Maven |
+| 构建 | Maven Wrapper|
+| 容器化 | Docker、Docker Compose |
 
 ## 项目结构
 
@@ -72,73 +66,6 @@ docs/sql/canteen.sql        MySQL 新建库脚本
 docs/sql/migration          已有数据库升级脚本
 ```
 
-主要调用链：
-
-```text
-HTTP Request
-  -> LoginInterceptor（JWT、角色）
-  -> Controller（参数绑定与校验）
-  -> Service（业务规则、资源归属、事务）
-  -> Mapper XML（SQL）
-  -> MySQL / H2
-```
-
-## 数据库设计
-
-当前包含三张业务表：
-
-- `user`：账号、密码哈希、角色、状态和头像信息。
-- `stall`：摊位信息、营业状态、商家归属和逻辑删除标记。
-- `dish`：菜品、价格、售罄状态、摊位归属和逻辑删除标记。
-
-项目不使用 `dish.stall_id -> stall.id` 数据库外键，关联存在性和商家归属由 Service 校验。`stall_id` 仍保留索引以支持关联查询。
-
-### 逻辑删除与唯一约束
-
-直接对 `name` 建唯一索引会导致逻辑删除后无法重新使用名称。本项目使用生成列：
-
-```sql
-active_name VARCHAR(100) GENERATED ALWAYS AS (
-    CASE WHEN is_delete = 0 THEN name ELSE NULL END
-) STORED
-```
-
-有效记录的 `active_name` 等于真实名称，已删除记录的值为 `NULL`。MySQL 唯一索引允许多个 `NULL`，因此可以同时满足：
-
-- 未删除摊位名称全局唯一。
-- 同一摊位内未删除菜品名称唯一。
-- 不同摊位允许使用相同菜品名。
-- 逻辑删除后允许重新创建同名数据，并保留历史记录。
-
-对应索引：
-
-```sql
-UNIQUE KEY uk_stall_active_name (active_name);
-UNIQUE KEY uk_dish_stall_active_name (stall_id, active_name);
-```
-
-### 查询索引与性能验证
-
-根据商家后台列表的真实查询条件建立联合索引：
-
-```sql
-KEY idx_stall_owner_delete_id (owner_user_id, is_delete, id);
-KEY idx_dish_stall_delete_id (stall_id, is_delete, id);
-```
-
-索引字段顺序先按资源归属缩小范围，再过滤逻辑删除，最后配合 `id` 排序。名称筛选使用 `LIKE '%keyword%'`，普通 B-Tree 索引不能有效加速该条件，因此没有为它盲目增加普通索引。
-
-MySQL 8.4.6 独立压测库结果：
-
-| 查询 | 数据规模 | 索引前中位数 | 索引后中位数 | 扫描范围变化 |
-| --- | ---: | ---: | ---: | --- |
-| 商家摊位列表 | 10,000 个摊位 | `13.85 ms` | `0.09985 ms` | 10,000 行降至 10 行 |
-| 摊位分页 `COUNT` | 10,000 个摊位 | `7.02 ms` | `0.05375 ms` | 全表扫描变为覆盖索引查询 |
-| 商家菜品列表 | 100,000 个菜品 | `255 ms` | `0.737 ms` | 10 万条扫描、9 万次关联降为目标摊位索引查询 |
-| 菜品分页 `COUNT` | 100,000 个菜品 | `199.5 ms` | `0.185 ms` | 两侧均使用覆盖索引查询 |
-
-测试方法为每条 SQL 预热一次，再执行十次 `EXPLAIN ANALYZE` 并取中位数。结果来自合成数据的 SQL 层对比，不代表线上 HTTP 接口响应时间。
-
 ## 本地运行
 
 ### 环境要求
@@ -155,19 +82,9 @@ MySQL 8.4.6 独立压测库结果：
 mysql -u root -p < docs/sql/canteen.sql
 ```
 
-如果数据库来自旧版建表脚本，先选择目标数据库，再执行迁移：
-
-```bash
-mysql -u root -p canteen < docs/sql/migration/V001__logical_unique_and_query_indexes.sql
-```
-
-迁移脚本按旧版约束和索引名称编写，只应执行一次。生产或重要数据环境执行 DDL 前应先备份并在测试库验证。
-
 ### 2. 配置应用
 
-仓库提供了无敏感信息的 [配置模板](src/main/resources/application-example.yml)。本地 `src/main/resources/application.yml` 被 `.gitignore` 忽略，不应提交真实数据库密码、JWT Secret 或 OSS Key。
-
-使用模板时激活 `example` profile，并至少提供数据库密码和 JWT Secret。PowerShell 示例：
+仓库提供了无敏感信息的 [配置模板](src/main/resources/application-example.yml)。使用模板时激活 `example` profile，并至少提供数据库密码和 JWT Secret。PowerShell 示例：
 
 ```powershell
 $env:SPRING_PROFILES_ACTIVE = "example"
@@ -196,17 +113,15 @@ ALIYUN_OSS_KEY_SECRET
 ALIYUN_OSS_BUCKET_NAME
 ```
 
-模板中的 OSS 配置默认为空，因此不使用头像上传时无需提供；调用头像上传接口前必须配置有效 OSS 参数。JWT Secret 应使用足够长度的随机值。不要把真实凭据写入 README、Git 或公开日志。
+模板中的 OSS 配置默认为空，因此不使用头像上传时无需提供；调用头像上传接口前必须配置有效 OSS 参数。
 
 ### 3. 启动应用
 
-在已经设置上述环境变量的同一个终端中运行：
+在已经设置上述环境变量的同一个终端(cmd)中运行：
 
 ```bash
-mvn spring-boot:run
+./mvnw spring-boot:run
 ```
-
-默认访问地址：`http://localhost:8080`。
 
 ### 4. 本地演示账号
 
@@ -240,60 +155,37 @@ mvn spring-boot:run
 Authorization: Bearer <access_token>
 ```
 
-当前统一业务响应结构：
-
-```json
-{
-  "code": 1,
-  "msg": "success",
-  "data": null
-}
+## Docker Compose 启动
+本项目的`.env`文件已被`.gitignore`忽略，请在项目根目录下新建`.env`文件，内容如下：
+```.env
+MYSQL_ROOT_PASSWORD=<mysql-root-password>
+DB_USERNAME=stall_app
+DB_PASSWORD=<mysql-stall-app-password>
+JWT_SECRET=<replace-with-a-long-random-secret>
+ALIYUN_OSS_ENDPOINT=<your-aliyun-oss-endpoint>
+ALIYUN_OSS_KEY_ID=<your-aliyun-oss-key-id>
+ALIYUN_OSS_KEY_SECRET=<your-aliyun-oss-key-secret>
+ALIYUN_OSS_BUCKET_NAME=<your-aliyun-oss-bucket-name>
 ```
+其中，如果不使用头像上传功能，则无需配置 `ALIYUN_OSS_*`相关参数。
 
-大部分业务异常当前仍返回 `HTTP 200 + code=0`；JWT 校验失败返回 `401`，角色不足返回 `403`，后两者尚未统一 JSON 响应体。
-
-## 测试
-
-运行全部测试：
-
+构建并启动服务：
 ```bash
-mvn clean test
+docker compose up --build -d
 ```
 
-当前干净测试结果：
+停止服务：
+```bash
+docker compose down
+```
+  
 
-```text
-Tests run: 188
-Failures: 0
-Errors: 0
-Skipped: 0
+`MySQL` 数据保存在 `mysql_data` 命名卷中，初始化 `SQL` 仅在数据卷首次创建时执行。执行下面的命令会删除 `MySQL` 数据卷和其中的数据。
+```bash
+docker compose down -v 
 ```
 
-测试分层：
+## 测试与性能
 
-- Controller：MockMvc + Mock Service，验证协议绑定、校验和响应。
-- Service：JUnit 5 + Mockito，验证业务规则、权限、归属和事务前置条件。
-- Mapper：Spring Boot + H2，验证动态 SQL、字段映射和数据库约束。
-- 分页集成测试：PageHelper + H2，验证筛选结果与 `total` 一致。
-- Interceptor：Mock request/response，验证 JWT、角色和 ThreadLocal 清理。
-
-逻辑唯一约束测试覆盖有效名称重复、删除后重复重建、菜品跨摊位同名等场景。
-
-## 当前限制与 Roadmap
-
-当前限制：
-
-- 用户禁用状态尚未参与登录判断。
-- JWT 中角色变化后需要重新登录才能生效。
-- 401/403 尚未使用统一 JSON 响应体。
-- 头像仅校验大小和扩展名，尚未校验真实文件内容。
-- 头像 OSS 上传与数据库 URL 更新不是一个原子事务。
-- 尚未提供顾客浏览、购物车和订单等外卖功能。
-
-近期计划：
-
-1. 接入 OpenAPI/Swagger。
-2. 统一 401/403 JSON 响应。
-3. 增加少量真实 HTTP -> Service -> Mapper -> H2 端到端测试。
-
-远期方向包括商家申请审批、顾客浏览、购物车、订单与订单状态流转。这些内容不属于当前已实现功能。
+- 使用 JUnit 5、Mockito、MockMvc 和 H2 进行分层测试，当前 188 项测试全部通过。
+- 根据后台查询设计联合索引；在 10 万条菜品合成数据下，列表 SQL 中位耗时由 `255 ms` 降至 `0.737 ms`。
